@@ -1,0 +1,129 @@
+[
+  {
+    "ContainingType": "ManageUsers.Controllers.UserEndPoints",
+    "Method": "CreateUser",
+    "RelativePath": "api/users/createuser",
+    "HttpMethod": "POST",
+    "IsController": false,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "ManageUsers.Application.DTOs.CreateUserRequest",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": [
+      {
+        "Type": "ManageUsers.Application.DTOs.CreateUserResponse",
+        "MediaTypes": [
+          "application/json"
+        ],
+        "StatusCode": 200
+      },
+      {
+        "Type": "Microsoft.AspNetCore.Mvc.ProblemDetails",
+        "MediaTypes": [
+          "application/json"
+        ],
+        "StatusCode": 400
+      }
+    ],
+    "Tags": [
+      "Users"
+    ],
+    "EndpointName": "CreateUser",
+    "Summary": "Create a new user"
+  },
+  {
+    "ContainingType": "ManageUsers.Controllers.UserEndPoints",
+    "Method": "LogIn",
+    "RelativePath": "api/users/login",
+    "HttpMethod": "POST",
+    "IsController": false,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "crmLoginApplicationUserDTO",
+        "Type": "ManageUsers.Application.DTOs.LoginUserRequest",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": [
+      {
+        "Type": "ManageUsers.Application.DTOs.LoginUserResponse",
+        "MediaTypes": [
+          "application/json"
+        ],
+        "StatusCode": 200
+      },
+      {
+        "Type": "Microsoft.AspNetCore.Mvc.ProblemDetails",
+        "MediaTypes": [
+          "application/json"
+        ],
+        "StatusCode": 400
+      }
+    ],
+    "Tags": [
+      "Users"
+    ],
+    "EndpointName": "Login",
+    "Summary": "Login a new user"
+  },
+  {
+    "ContainingType": "ManageUsers.Controllers.UserEndPoints\u002B\u003C\u003Ec",
+    "Method": "\u003CMapUserEndpoints\u003Eb__0_0",
+    "RelativePath": "api/users/me",
+    "HttpMethod": "GET",
+    "IsController": false,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": [
+      {
+        "Type": "System.Void",
+        "MediaTypes": [],
+        "StatusCode": 200
+      }
+    ],
+    "Tags": [
+      "Users"
+    ]
+  },
+  {
+    "ContainingType": "ManageUsers.Controllers.UserEndPoints",
+    "Method": "ResetPassword",
+    "RelativePath": "api/users/resetpassword",
+    "HttpMethod": "PUT",
+    "IsController": false,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "changeUserPasswordRequest",
+        "Type": "ManageUsers.Application.DTOs.ChangeUserPasswordRequest",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": [
+      {
+        "Type": "ManageUsers.Application.DTOs.LoginUserResponse",
+        "MediaTypes": [
+          "application/json"
+        ],
+        "StatusCode": 200
+      },
+      {
+        "Type": "Microsoft.AspNetCore.Mvc.ProblemDetails",
+        "MediaTypes": [
+          "application/json"
+        ],
+        "StatusCode": 400
+      }
+    ],
+    "Tags": [
+      "Users"
+    ],
+    "EndpointName": "ResetPassword",
+    "Summary": "Reset user password"
+  }
+]

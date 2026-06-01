@@ -1,0 +1,6 @@
+@ManageUsers_HostAddress = http://localhost:5062
+
+Post {{ManageUsers_HostAddress}}
+Accept: application/json
+
+###
