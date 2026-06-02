@@ -33,18 +33,31 @@ namespace ManageUsers.Controllers
                 .Produces<CreateUserResponse>(StatusCodes.Status200OK)
                 .Produces<ProblemDetails>(StatusCodes.Status400BadRequest);
 
-            group.MapPost("/login", LogIn)
+            group.MapPost("/login", Login)
                .WithName("Login")
                .WithSummary("Login a new user")
                .Produces<LoginUserResponse>(StatusCodes.Status200OK)
                .Produces<ProblemDetails>(StatusCodes.Status400BadRequest);
 
-            group.MapPut("/resetpassword", ResetPassword)
-                 .WithName("ResetPassword")
-                .WithSummary("Reset user password")
+            group.MapPut("/changepassword", ChangePassword)
+                 .WithName("ChangePassword")
+                .WithSummary("Change user password")
                 .Produces<LoginUserResponse>(StatusCodes.Status200OK)
                 .Produces<ProblemDetails>(StatusCodes.Status400BadRequest);
 
+
+            group.MapPut("/forgotpassword", ForgotPassword)
+                .WithName("ForgotPassword")
+               .WithSummary("Forgot user password")
+               .Produces<LoginUserResponse>(StatusCodes.Status200OK)
+               .Produces<ProblemDetails>(StatusCodes.Status400BadRequest);
+
+
+            group.MapPut("/resetpassword", ResetPassword)
+               .WithName("ResetPassword")
+              .WithSummary("Reset user password")
+              .Produces<LoginUserResponse>(StatusCodes.Status200OK)
+              .Produces<ProblemDetails>(StatusCodes.Status400BadRequest);
         }
 
         public static async Task<IResult> CreateUser(
@@ -98,7 +111,7 @@ namespace ManageUsers.Controllers
         }
 
 
-        private static async Task<IResult> LogIn(
+        private static async Task<IResult> Login(
             [FromBody] LoginUserRequest crmLoginApplicationUserDTO,
             ISender sender,
             HttpContext context)
@@ -124,7 +137,7 @@ namespace ManageUsers.Controllers
         }
 
 
-        private static async Task<IResult> ResetPassword(
+        private static async Task<IResult> ChangePassword(
            [FromBody] ChangeUserPasswordRequest changeUserPasswordRequest,
            ClaimsPrincipal claimsPrincipal,
            HttpContext context,
@@ -150,6 +163,71 @@ namespace ManageUsers.Controllers
             catch (InvalidOperationException ex)
             {
                 return TypedResults.Problem(detail: ex.Message, statusCode: StatusCodes.Status400BadRequest);
+            }
+        }
+
+
+        private static async Task<IResult> ForgotPassword(
+            [FromBody] ForgotPasswordRequest forgotPasswordRequest,
+            HttpContext context,
+            ISender sender)
+        {
+            try
+            {
+                var command = new ForgotPasswordUserCommand(forgotPasswordRequest.Email, context);
+                var response = await sender.Send(command);
+
+                if (!string.IsNullOrEmpty(response.FailedResult))
+                {
+                    return TypedResults.BadRequest(new { error = response.FailedResult });
+                }
+
+                return TypedResults.Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return TypedResults.Problem(
+                    detail: "????? ?? ?????? ??????? ?? ???.",
+                    statusCode: StatusCodes.Status500InternalServerError
+                );
+            }
+        }
+
+        private static async Task<IResult> ResetPassword(
+            [FromQuery] string token,
+            [FromBody] ResetPasswordRequest request,
+            HttpContext context,
+            ISender sender)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(token))
+                {
+                    return TypedResults.BadRequest(new { error = "???? ?????? ???" });
+                }
+
+                var command = new ResetPasswordUserCommand(
+                    request.Email,
+                    token,
+                    request.NewPassword,
+                    context
+                );
+
+                var response = await sender.Send(command);
+
+                if (!string.IsNullOrEmpty(response.FailedResult))
+                {
+                    return TypedResults.BadRequest(new { error = response.FailedResult });
+                }
+
+                return TypedResults.Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return TypedResults.Problem(
+                    detail: "????? ?? ?????? ??????? ?? ???.",
+                    statusCode: StatusCodes.Status500InternalServerError
+                );
             }
         }
     }

@@ -7,9 +7,11 @@ using ManageUsers.Domain;
 using ManageUsers.Infrastructure.Persistence;
 using ManageUsers.Infrastructure.Persistence.DataSeeder;
 using ManageUsers.Infrastructure.Repositories;
+using ManageUsers.Infrastructure.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Security.Claims;
@@ -113,6 +115,8 @@ builder.Services.AddAuthentication(options =>
             NameClaimType = "unique_name"
         };
     });
+
+builder.Services.AddScoped<IEmailService, EmailService>();
 
 builder.Services.AddHttpContextAccessor();
 
