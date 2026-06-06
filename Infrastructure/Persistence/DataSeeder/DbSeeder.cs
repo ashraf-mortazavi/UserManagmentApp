@@ -31,15 +31,15 @@ public static class DbSeeder
         {
             List<Permission> permissions = new List<Permission>()
             {
-                new Permission { Key = "menu.all.view", Title = "View All" },
-                new Permission { Key = "menu.dashboard.view", Title = "View Dashboard" },
-                new Permission { Key = "menu.users.view", Title = "View Users" },
-                new Permission { Key = "menu.users.create", Title = "Create User" },
-                new Permission { Key = "menu.reports.view", Title = "View Reports" },
-                new Permission { Key = "menu.create.progress", Title = "Create Progress" },
-                new Permission { Key = "menu.progress.view", Title = "View Progress" },
-                new Permission { Key = "menu.create.operator", Title = "Create Operator" },
-                new Permission { Key = "menu.view.operator", Title = "View Operator" }
+                new Permission { Key = "menu.all.view", Name = "View All" },
+                new Permission { Key = "menu.dashboard.view", Name = "View Dashboard" },
+                new Permission { Key = "menu.users.view", Name = "View Users" },
+                new Permission { Key = "menu.users.create", Name = "Create User" },
+                new Permission { Key = "menu.reports.view", Name = "View Reports" },
+                new Permission { Key = "menu.create.progress", Name = "Create Progress" },
+                new Permission { Key = "menu.progress.view", Name = "View Progress" },
+                new Permission { Key = "menu.create.operator", Name = "Create Operator" },
+                new Permission { Key = "menu.view.operator", Name = "View Operator" }
             };
             db.Permissions.AddRange(permissions);
             await db.SaveChangesAsync(ct);
@@ -51,7 +51,7 @@ public static class DbSeeder
         if (!await db.RolePermissions.AnyAsync(ct))
         {
             // SuperAdmin role permissions (still IsSuperAdmin bypass exists)
-            List<Guid> superAdminPermissionIds = allPermissions.Values.Select(p => p.Id).ToList();
+            List<int> superAdminPermissionIds = allPermissions.Values.Select(p => p.Id).ToList();
             db.RolePermissions.AddRange(superAdminPermissionIds.Select(pid =>
             new RolePermission
             {

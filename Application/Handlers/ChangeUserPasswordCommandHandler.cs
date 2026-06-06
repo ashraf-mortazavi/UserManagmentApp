@@ -61,9 +61,9 @@ namespace ManageUsers.Application.Handlers
             }
 
         
-            List<IdentityUserRole<string>> identityUserRoles = await _userRepository.GetUserRole(user.Id.ToString());
-            Dictionary<string, List<string>> mapRolePermissions = await _userRepository.GetRolePermissions(identityUserRoles, cancellationToken);
-            List<string> roleIds = new();
+            List<IdentityUserRole<int>> identityUserRoles = await _userRepository.GetUserRole(user.Id);
+            Dictionary<int, List<int>> mapRolePermissions = await _userRepository.GetRolePermissions(identityUserRoles, cancellationToken);
+            List<int> roleIds = new();
             foreach (var item in mapRolePermissions)
             {
                 roleIds.Add(item.Key);

@@ -17,6 +17,7 @@ using System.Runtime.Intrinsics.Arm;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
+using System.Threading;
 
 namespace ManageUsers.Infrastructure.Repositories
 {
@@ -76,56 +77,24 @@ namespace ManageUsers.Infrastructure.Repositories
             return await _usermanager.CheckPasswordAsync(user: user, password: password);
         }
 
-        public async Task<List<IdentityUserRole<string>>> GetUserRole(string userId)
+        public async Task<List<IdentityUserRole<int>>> GetUserRole(int userId)
         {
-            if (!Guid.TryParse(userId, out Guid userGuid))
-                throw new ArgumentException("Invalid user ID format", nameof(userId));
-
-            return await _context.UserRoles.Where(ur => ur.UserId == userGuid)
-                 .Select(ur => new IdentityUserRole<string>
+            return await _context.UserRoles.Where(ur => ur.UserId == userId)
+                 .Select(ur => new IdentityUserRole<int>
                  {
                      UserId = userId,
-                     RoleId = ur.RoleId.ToString()
+                     RoleId = ur.RoleId
                  }).ToListAsync();
         }
 
-        public async Task<List<Role>> GetRolesAsync(List<string> roles, CancellationToken cancellationToken = default)
+        public async Task<List<Role>> GetRolesAsync(List<int> roleIds, CancellationToken cancellationToken = default)
         {
-            if (roles is null || roles.Count == 0)
+            if (roleIds is null || roleIds.Count == 0 || !roleIds.Any())
             {
                 return new List<Role>();
             }
-            List<string> normalizedRoleNames = roles.Where(x => !string.IsNullOrWhiteSpace(x)).Select(x => x.Trim().ToUpper()).ToList();
-            return await _roleManager.Roles.Where(r => normalizedRoleNames.Contains(r.Name!.ToUpper())).ToListAsync(cancellationToken);
+            return await _roleManager.Roles.Where(r => roleIds.Contains(r.Id)!).ToListAsync(cancellationToken);
         }
-
-        //public async Task<Dictionary<Guid, List<Guid>>> GetRoleIdsPermissionIds(IEnumerable<IdentityUserRole<string>> identityUserRoles, CancellationToken cancellationToken = default)
-        //{
-        //    List<RolePermission> rolePermissions = [];
-
-        //    List<string> roleIds = identityUserRoles
-        //        .Select(r => r.RoleId)
-        //        .Distinct()
-        //        .ToList();
-
-
-        //    var permisionRoloPaires = await _context.RolePermissions
-        //         .Where(rp => roleIds.Contains(rp.RoleId.ToString()))
-        //         .Select(rp => new { rp.PermissionId, rp.RoleId })
-        //         .ToListAsync(cancellationToken);
-
-
-        //    var permissionRolesMap = permisionRoloPaires
-        //        .GroupBy(x => x.PermissionId)
-        //        .ToDictionary(
-        //            g => g.Key,                       // PermissionId
-        //            g => g.Select(x => x.RoleId)      // Roles that have this permission
-        //                  .Distinct()
-        //                  .ToList()
-        //        );
-
-        //    return permissionRolesMap;
-        //}
 
         public async Task<JWEToken> CreateTokenAsync(CreateTokenContext context, CancellationToken cancellationToken = default)
         {
@@ -220,28 +189,28 @@ namespace ManageUsers.Infrastructure.Repositories
             }
         }
 
-        public async Task<Dictionary<string, List<string>>> GetRolePermissions(IEnumerable<IdentityUserRole<string>> identityUserRoles, CancellationToken cancellationToken = default)
+        public async Task<Dictionary<int, List<int>>> GetRolePermissions(IEnumerable<IdentityUserRole<int>> identityUserRoles, CancellationToken cancellationToken = default)
         {
             List<RolePermission> rolePermissions = [];
 
-            List<string> roleIds = identityUserRoles
+            List<int> roleIds = identityUserRoles
                 .Select(r => r.RoleId)
                 .Distinct()
                 .ToList();
 
 
             var permisionRoloPaires = await _context.RolePermissions
-                 .Where(rp => roleIds.Contains(rp.RoleId.ToString()))
+                 .Where(rp => roleIds.Contains(rp.RoleId))
                  .Select(rp => new { rp.PermissionId, rp.RoleId })
                  .Distinct()
                  .ToListAsync(cancellationToken);
 
 
             var permissionRolesMap = permisionRoloPaires
-                .GroupBy(x => x.RoleId.ToString())
+                .GroupBy(x => x.RoleId)
                 .ToDictionary(
                     g => g.Key,                      
-                    g => g.Select(x => x.PermissionId.ToString())      
+                    g => g.Select(x => x.PermissionId)      
                           .Distinct()
                           .ToList()
                 );
@@ -291,7 +260,7 @@ namespace ManageUsers.Infrastructure.Repositories
             return await _usermanager.AddPasswordAsync(user, newPassword);
         }
 
-        public async Task<List<RolePermission>> GetRolePermisionsByRoleIds(List<string> roleIds, CancellationToken cancellationToken = default)
+        public async Task<List<RolePermission>> GetRolePermisionsByRoleIds(List<int> roleIds, CancellationToken cancellationToken = default)
         {
             if (roleIds is null || roleIds.Count == 0)
             {
@@ -300,7 +269,7 @@ namespace ManageUsers.Infrastructure.Repositories
 
 
             List<string> existingRoleIds = await _context.Roles
-                .Where(r => roleIds.Contains(r.Id.ToString()))
+                .Where(r => roleIds.Contains(r.Id))
                 .Select(r => r.Id.ToString())
                 .ToListAsync(cancellationToken);
 
@@ -311,11 +280,21 @@ namespace ManageUsers.Infrastructure.Repositories
 
             List<RolePermission> rolePermissions = await _context.RolePermissions
                 .Where(rp => existingRoleIds.Contains(rp.RoleId.ToString()))
-                .Distinct()
                 .ToListAsync(cancellationToken);
 
             return rolePermissions;
         }
 
+        public async Task<List<Role>> GetAllRolesAsync(CancellationToken ct = default)
+        {
+            return await _roleManager.Roles.ToListAsync(cancellationToken: ct);
+        }
+
+
+        public async Task<Organization?> OrganizationExistsAsync(int organizationId, CancellationToken cancellationToken = default)
+        {
+            return await _context.Organizations.FirstOrDefaultAsync(ur => ur.Id == organizationId, cancellationToken);
+
+        }
     }
 }

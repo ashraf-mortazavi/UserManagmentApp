@@ -8,21 +8,35 @@ public sealed class PermissionConfiguration : IEntityTypeConfiguration<Permissio
 {
     public void Configure(EntityTypeBuilder<Permission> builder)
     {
-        //builder.ToTable("roles");
+        builder.ToTable("Permissions");
+
+        builder.HasIndex(x => x.Key)
+            .IsUnique()
+            .HasFilter("[IsDeleted] = 0");
+
+        builder.HasIndex(x => new { x.ParentId, x.SortOrder });
 
         builder.HasKey(x => x.Id);
-        builder.HasIndex(x => x.Key).IsUnique();
 
         builder.Property(x => x.Key)
             .HasMaxLength(200)
             .IsRequired();
 
-        builder.Property(x => x.Title)
-            .HasMaxLength(180)
+        builder.Property(x => x.Name)
+            .HasMaxLength(200)
             .IsRequired();
 
-
         builder.Property(x => x.CreatedAt)
-            .IsRequired(false);
+            .IsRequired(true);
+
+        builder.Property(x => x.IsDeleted).HasDefaultValue(false);
+        builder.HasQueryFilter(x => !x.IsDeleted);
+
+
+
+        builder.HasOne(x => x.Parent)
+            .WithMany(x => x.Children)
+            .HasForeignKey(x => x.ParentId)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }

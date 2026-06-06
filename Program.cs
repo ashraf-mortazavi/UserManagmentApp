@@ -117,6 +117,7 @@ builder.Services.AddAuthentication(options =>
     });
 
 builder.Services.AddScoped<IEmailService, EmailService>();
+builder.Services.AddTransient<IEmailSender, NoOpEmailSender>();
 
 builder.Services.AddHttpContextAccessor();
 

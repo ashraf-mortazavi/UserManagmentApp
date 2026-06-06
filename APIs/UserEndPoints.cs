@@ -1,5 +1,6 @@
 using ManageUsers.Application.Commands;
 using ManageUsers.Application.DTOs;
+using ManageUsers.Application.Queries;
 using ManageUsers.Domain;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -7,6 +8,7 @@ using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Net;
+using System.Reflection;
 using System.Security.Claims;
 
 namespace ManageUsers.Controllers
@@ -58,6 +60,19 @@ namespace ManageUsers.Controllers
               .WithSummary("Reset user password")
               .Produces<LoginUserResponse>(StatusCodes.Status200OK)
               .Produces<ProblemDetails>(StatusCodes.Status400BadRequest);
+
+            group.MapGet("/{roleId:int}/permissions", GetRolePermissions)
+                .WithName("GetRolePermissions")
+                .WithSummary("Get role Permissions")
+                .Produces<GetRolePermissionsResponse>(StatusCodes.Status200OK)
+                .Produces<ProblemDetails>(StatusCodes.Status400BadRequest);
+
+
+            group.MapGet("/roles", GetRoles)
+                .WithName("GetRoles")
+                .WithSummary("Get roles")
+                .Produces<RoleDto>(StatusCodes.Status200OK)
+                .Produces<ProblemDetails>(StatusCodes.Status400BadRequest);
         }
 
         public static async Task<IResult> CreateUser(
@@ -72,7 +87,7 @@ namespace ManageUsers.Controllers
                 var userId = claimsPrincipal.FindFirst("nameid")?.Value
                 ?? claimsPrincipal.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
-                if (string.IsNullOrEmpty(userId) || !Guid.TryParse(userId, out var createdById))
+                if (string.IsNullOrEmpty(userId))
                 {
                     return Results.Problem("Invalid user identity.", statusCode: StatusCodes.Status401Unauthorized);
                 }
@@ -84,10 +99,16 @@ namespace ManageUsers.Controllers
                    NationalCode: request.NationalCode,
                    Email: request.Email,
                    PostalCode: request.PostalCode,
+                   Position: request.Position,
+                   PersonalCode: request.PersonalCode,
+                   OrganizationId: request.OrganizationId,
+                   AreaId: request.AreaId,
+                   RegionId: request.RegionId,
                    UserName: request.UserName,
                    Password: request.Password,
-                   CreatedById: createdById,
-                   UserRoles: request.UserRoles,
+                   Description: request.Description,
+                   CreatedById: userId,
+                   UserRoleIds: request.UserRoleIds,
                    Enabled: true,
                    CreatedAt: DateTime.UtcNow);
 
@@ -228,6 +249,46 @@ namespace ManageUsers.Controllers
                     detail: "????? ?? ?????? ??????? ?? ???.",
                     statusCode: StatusCodes.Status500InternalServerError
                 );
+            }
+        }
+
+
+        private static async Task<IResult> GetRolePermissions(
+            [FromQuery] List<int> roleIds,
+            ISender sender,
+            CancellationToken ct)
+        {
+            List<GetRolePermissionsResponse> response = new();
+            try
+            {
+                GetRolePermissionsQuery getRolePermissionsQuery = new(roleIds: new List<int>(roleIds));
+                response = await sender.Send(getRolePermissionsQuery);
+                return TypedResults.Ok(response);
+            }
+            catch
+            {
+                throw;
+            }
+        }
+
+
+        private static async Task<IResult> GetRoles(
+          ISender sender,
+          ClaimsPrincipal claimsPrincipal,
+          CancellationToken ct)
+        {
+            GetRolesResponse response = new();
+            try
+            {
+                string userId = claimsPrincipal.FindFirst("nameid")?.Value!
+                    ?? claimsPrincipal.FindFirst(ClaimTypes.NameIdentifier)?.Value!;
+
+                response = await sender.Send(new GetRolesQuery(userId: userId));
+                return TypedResults.Ok(response);
+            }
+            catch
+            {
+                throw;
             }
         }
     }

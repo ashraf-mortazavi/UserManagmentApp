@@ -44,9 +44,9 @@ namespace ManageUsers.Application.Handlers
                 response.FailedResult = "رمز ورود اشتباه است!";
                 return response;
             }
-            List<IdentityUserRole<string>> identityUserRoles = await _userRepository.GetUserRole(user.Id.ToString());
-            Dictionary<string, List<string>> mapRolePermissions = await _userRepository.GetRolePermissions(identityUserRoles, cancellationToken);
-            List<string> roleNames = new();
+            List<IdentityUserRole<int>> identityUserRoles = await _userRepository.GetUserRole(user.Id);
+            Dictionary<int, List<int>> mapRolePermissions = await _userRepository.GetRolePermissions(identityUserRoles, cancellationToken);
+            List<int> roleNames = new();
             foreach (var item in mapRolePermissions)
             {
                 roleNames.Add(item.Key);

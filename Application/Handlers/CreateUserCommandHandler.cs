@@ -25,10 +25,15 @@ namespace ManageUsers.Application.Handlers
 
         public async Task<CreateUserResponse> Handle(CreateUserCommand request, CancellationToken ct)
         {
-            List<Role?> roles = await _userRepository.GetRolesAsync(request.UserRoles, ct);
+            List<Role?> roles = await _userRepository.GetRolesAsync(request.UserRoleIds, ct);
             if (!roles.Any() || roles is null || roles.Count ==0)
             {
                 throw new Exception("RoleIds are not Valid!");
+            }
+
+            if (request.OrganizationId.HasValue)
+            {
+                Organization organization = await _userRepository.OrganizationExistsAsync(request.OrganizationId!.Value, ct);
             }
 
             User newUser = new User();
@@ -38,16 +43,22 @@ namespace ManageUsers.Application.Handlers
             newUser.PhoneNumber = request.PhoneNumber;
             newUser.Email = request.Email;
             newUser.PostalCode = request.PostalCode;
+            newUser.RegionId = request.RegionId;
+            newUser.AreaId = request.AreaId;
+            newUser.Description = request.Description;
+            newUser.OrganizationId = request.OrganizationId;
+            newUser.PersonalCode = request.PersonalCode;
+            newUser.Position = request.Position;
             newUser.CreatedById = request.CreatedById;
             newUser.Enabled = true;
             newUser.CreatedAt = DateTime.UtcNow;
-
             newUser.CreatedById = request.CreatedById;
             newUser.UserName = request.UserName;
+
             newUser = await _userRepository.AssignUserRolesAsync(user: newUser, request.Password, roles.Select(x=> x.Name!).ToList() , cancellationToken: ct);
 
             return new CreateUserResponse(
-                newUser.Id
+                newUser.Id.ToString()
             );
         }
     }

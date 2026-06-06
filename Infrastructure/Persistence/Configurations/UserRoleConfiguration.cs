@@ -9,8 +9,13 @@ public sealed class UserRoleConfiguration : IEntityTypeConfiguration<UserRole>
     public void Configure(EntityTypeBuilder<UserRole> builder)
     {
 
+        builder.ToTable("UserRoles");
+
         builder.Property(x => x.CreatedAt)
             .IsRequired();
+
+        builder.Property(x => x.UpdatedAt)
+            .IsRequired(false);
 
         builder.HasOne(x => x.User)
             .WithMany(x => x.UserRoles)
@@ -22,7 +27,6 @@ public sealed class UserRoleConfiguration : IEntityTypeConfiguration<UserRole>
             .HasForeignKey(x => x.RoleId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        builder.HasIndex(x => x.UserId);
-        builder.HasIndex(x => x.RoleId);
+       builder.HasIndex(x => new {x.UserId, x.RoleId});
     }
 }

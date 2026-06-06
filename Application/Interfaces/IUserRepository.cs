@@ -11,14 +11,18 @@ namespace ManageUsers.Application.Interfaces
         Task<User> AddAsync(User user, CancellationToken ct = default);
         Task UpdateAsync(User user, CancellationToken ct = default);
         Task<bool> CheckPasswordAsync(User user, string password);
-        Task<List<IdentityUserRole<string>>> GetUserRole(string userId);
-        Task<List<Role?>> GetRolesAsync(List<string> roles, CancellationToken cancellationToken = default);
+        Task<List<Role>> GetAllRolesAsync(CancellationToken ct = default);
+        Task<List<IdentityUserRole<int>>> GetUserRole(int userId);
+        Task<List<Role?>> GetRolesAsync(List<int> roleIds, CancellationToken cancellationToken = default);
         //Task<Dictionary<Guid, List<Guid>>> GetRoleIdsPermissionIds(IEnumerable<IdentityUserRole<string>> identityUserRoles, CancellationToken cancellationToken = default);
         Task<JWEToken> CreateTokenAsync(CreateTokenContext context, CancellationToken cancellationToken = default);
-        Task<Dictionary<string, List<string>>> GetRolePermissions(IEnumerable<IdentityUserRole<string>> identityUserRoles, CancellationToken cancellationToken = default);
+        Task<Dictionary<int, List<int>>> GetRolePermissions(IEnumerable<IdentityUserRole<int>> identityUserRoles, CancellationToken cancellationToken = default);
         Task<User> AssignUserRolesAsync(User user, string password, List<string> roles, CancellationToken cancellationToken = default);
         Task<IdentityResult> SetPasswordByUserIdAsync(string userId, string newPassword);
-        Task<List<RolePermission>> GetRolePermisionsByRoleIds(List<string> roleIds, CancellationToken cancellationToken = default);
+        Task<List<RolePermission>> GetRolePermisionsByRoleIds(List<int> roleIds, CancellationToken cancellationToken = default);
+
+        Task<Organization> OrganizationExistsAsync(int organizationId, CancellationToken cancellationToken = default);
+
 
     }
 }

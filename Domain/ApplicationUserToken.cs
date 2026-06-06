@@ -12,7 +12,7 @@ namespace ManageUsers.Domain
 
         public DateTime RefreshTokenExpirationDate { get; set; }
         public string? PhoneNumber { get; set; }
-        public Guid? UserId { get; set; }
+        public int? UserId { get; set; }
         public User? User { get; set; }
         public DateTime CreatedAt { get; set; }
     }
