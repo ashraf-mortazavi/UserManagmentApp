@@ -75,22 +75,18 @@ namespace ManageUsers.Controllers
                 .Produces<ProblemDetails>(StatusCodes.Status400BadRequest);
         }
 
-        public static async Task<IResult> CreateUser(
+        public static async Task<Results<Ok<APIResponse<CreateUserResponse>>, BadRequest<APIResponse<CreateUserResponse>>>> CreateUser(
             [FromBody] CreateUserRequest request,
             IMediator mediator,
             ClaimsPrincipal claimsPrincipal,
             CancellationToken ct)
         {
+            APIResponse<CreateUserResponse> response = new();
 
             try
             {
                 var userId = claimsPrincipal.FindFirst("nameid")?.Value
                 ?? claimsPrincipal.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-
-                if (string.IsNullOrEmpty(userId))
-                {
-                    return Results.Problem("Invalid user identity.", statusCode: StatusCodes.Status401Unauthorized);
-                }
 
                 var command = new CreateUserCommand(
                    FirstName: request.FirstName,
@@ -112,121 +108,132 @@ namespace ManageUsers.Controllers
                    Enabled: true,
                    CreatedAt: DateTime.UtcNow);
 
-                var result = await mediator.Send(command, ct);
-                return Results.Created($"{result.Id}", result);
+                CreateUserResponse createUserResponse = await mediator.Send(command, ct);
+                if (!string.IsNullOrEmpty(createUserResponse.FailedResult))
+                {
+                    response.ErrorMessage = [createUserResponse.FailedResult];
+                    response.IsSuccess = false;
+                    response.StatusCode = HttpStatusCode.BadRequest;
+                    return TypedResults.BadRequest(response);
+                }
+                response.StatusCode = HttpStatusCode.OK;
+                response.Result.Data = createUserResponse;
+                return TypedResults.Ok(response);
             }
-            catch (DbUpdateException ex)
+
+            catch
             {
-                return Results.Problem(
-                    detail: "Duplicated",
-                    statusCode: StatusCodes.Status409Conflict
-                    );
+                throw;
             }
-            catch (InvalidOperationException ex)
-            {
-                return Results.Problem(
-                    detail: ex.Message,
-                    statusCode: StatusCodes.Status400BadRequest
-                );
-            }
+
         }
 
 
-        private static async Task<IResult> Login(
-            [FromBody] LoginUserRequest crmLoginApplicationUserDTO,
+        private static async Task<Results<Ok<APIResponse<LoginUserResponse>>, BadRequest<APIResponse<LoginUserResponse>>>> Login(
+            [FromBody] LoginUserRequest loginUserDTO,
             ISender sender,
             HttpContext context)
         {
+            APIResponse<LoginUserResponse> response = new();
             try
             {
-                LoginUserResponse response = new LoginUserResponse();
-                LoginUserCommand loginUserCommand = new(context, crmLoginApplicationUserDTO);
-                response = await sender.Send(loginUserCommand);
-                if (!string.IsNullOrEmpty(response.FailedResult))
+                LoginUserResponse loginUserResponse = new LoginUserResponse();
+                LoginUserCommand loginUserCommand = new(context, loginUserDTO);
+                loginUserResponse = await sender.Send(loginUserCommand);
+                if (!string.IsNullOrEmpty(loginUserResponse.FailedResult))
                 {
+                    response.ErrorMessage = [loginUserResponse.FailedResult];
+                    response.IsSuccess = false;
+                    response.StatusCode = HttpStatusCode.BadRequest;
+                    response.Result.Data = loginUserResponse;
                     return TypedResults.BadRequest(response);
                 }
-
+                response.StatusCode = HttpStatusCode.OK;
                 return TypedResults.Ok(response);
 
 
             }
-            catch (InvalidOperationException ex)
+            catch
             {
-                return TypedResults.Problem(detail: ex.Message, statusCode: StatusCodes.Status400BadRequest);
+                throw;
             }
         }
 
 
-        private static async Task<IResult> ChangePassword(
+        private static async Task<Results<Ok<APIResponse<ChangeUserPasswordResponse>>, BadRequest<APIResponse<ChangeUserPasswordResponse>>>> ChangePassword(
            [FromBody] ChangeUserPasswordRequest changeUserPasswordRequest,
            ClaimsPrincipal claimsPrincipal,
            HttpContext context,
            ISender sender)
         {
+            APIResponse<ChangeUserPasswordResponse> response = new();
+
             try
             {
                 string userId = claimsPrincipal.FindFirst("nameid")?.Value!
                     ?? claimsPrincipal.FindFirst(ClaimTypes.NameIdentifier)?.Value!;
 
-                ChangeUserPasswordResponse response;
                 ChangeUserPasswordCommand changeUserPasswordCommand = new(userId: userId, context: context, changeUserPasswordRequest: changeUserPasswordRequest);
-                response = await sender.Send(changeUserPasswordCommand);
-                if (!string.IsNullOrEmpty(response.FailedResult))
+                ChangeUserPasswordResponse changeUserPasswordResponse = await sender.Send(changeUserPasswordCommand);
+                if (!string.IsNullOrEmpty(changeUserPasswordResponse.FailedResult))
                 {
+                    response.ErrorMessage = [changeUserPasswordResponse.FailedResult];
+                    response.IsSuccess = false;
+                    response.StatusCode = HttpStatusCode.BadRequest;
                     return TypedResults.BadRequest(response);
                 }
-
+                response.StatusCode = HttpStatusCode.OK;
+                response.Result.Data = changeUserPasswordResponse;
                 return TypedResults.Ok(response);
 
 
             }
-            catch (InvalidOperationException ex)
+            catch
             {
-                return TypedResults.Problem(detail: ex.Message, statusCode: StatusCodes.Status400BadRequest);
+                throw;
             }
         }
 
 
-        private static async Task<IResult> ForgotPassword(
+        private static async Task<Results<Ok<APIResponse<ForgotPasswordResponse>>, BadRequest<APIResponse<ForgotPasswordResponse>>>> ForgotPassword(
             [FromBody] ForgotPasswordRequest forgotPasswordRequest,
             HttpContext context,
             ISender sender)
         {
+            APIResponse<ForgotPasswordResponse> response = new();
+
             try
             {
                 var command = new ForgotPasswordUserCommand(forgotPasswordRequest.Email, context);
-                var response = await sender.Send(command);
+                ForgotPasswordResponse forgotPasswordResponse = await sender.Send(command);
 
-                if (!string.IsNullOrEmpty(response.FailedResult))
+                if (!string.IsNullOrEmpty(forgotPasswordResponse.FailedResult))
                 {
-                    return TypedResults.BadRequest(new { error = response.FailedResult });
+                    response.ErrorMessage = [forgotPasswordResponse.FailedResult];
+                    response.IsSuccess = false;
+                    response.StatusCode = HttpStatusCode.BadRequest;
+                    return TypedResults.BadRequest(response);
                 }
-
+                response.StatusCode = HttpStatusCode.OK;
+                response.Result.Data = forgotPasswordResponse;
                 return TypedResults.Ok(response);
             }
-            catch (Exception ex)
+            catch
             {
-                return TypedResults.Problem(
-                    detail: "????? ?? ?????? ??????? ?? ???.",
-                    statusCode: StatusCodes.Status500InternalServerError
-                );
+                throw;
             }
         }
 
-        private static async Task<IResult> ResetPassword(
+        private static async Task<Results<Ok<APIResponse<ResetPasswordResponse>>, BadRequest<APIResponse<ResetPasswordResponse>>>> ResetPassword(
             [FromQuery] string token,
             [FromBody] ResetPasswordRequest request,
             HttpContext context,
             ISender sender)
         {
+            APIResponse<ResetPasswordResponse> response = new();
+
             try
             {
-                if (string.IsNullOrWhiteSpace(token))
-                {
-                    return TypedResults.BadRequest(new { error = "???? ?????? ???" });
-                }
-
                 var command = new ResetPasswordUserCommand(
                     request.Email,
                     token,
@@ -234,35 +241,17 @@ namespace ManageUsers.Controllers
                     context
                 );
 
-                var response = await sender.Send(command);
+                ResetPasswordResponse resetPasswordResponse = await sender.Send(command);
 
-                if (!string.IsNullOrEmpty(response.FailedResult))
+                if (!string.IsNullOrEmpty(resetPasswordResponse.FailedResult))
                 {
-                    return TypedResults.BadRequest(new { error = response.FailedResult });
+                    response.ErrorMessage = [resetPasswordResponse.FailedResult];
+                    response.IsSuccess = false;
+                    response.StatusCode = HttpStatusCode.BadRequest;
+                    return TypedResults.BadRequest(response);
                 }
-
-                return TypedResults.Ok(response);
-            }
-            catch (Exception ex)
-            {
-                return TypedResults.Problem(
-                    detail: "????? ?? ?????? ??????? ?? ???.",
-                    statusCode: StatusCodes.Status500InternalServerError
-                );
-            }
-        }
-
-
-        private static async Task<IResult> GetRolePermissions(
-            [FromQuery] List<int> roleIds,
-            ISender sender,
-            CancellationToken ct)
-        {
-            List<GetRolePermissionsResponse> response = new();
-            try
-            {
-                GetRolePermissionsQuery getRolePermissionsQuery = new(roleIds: new List<int>(roleIds));
-                response = await sender.Send(getRolePermissionsQuery);
+                response.StatusCode = HttpStatusCode.OK;
+                response.Result.Data = resetPasswordResponse;
                 return TypedResults.Ok(response);
             }
             catch
@@ -272,19 +261,54 @@ namespace ManageUsers.Controllers
         }
 
 
-        private static async Task<IResult> GetRoles(
+        private static async Task<Results<Ok<APIResponse<List<GetRolePermissionsResponse>>>, NotFound<APIResponse<List<GetRolePermissionsResponse>>>>> GetRolePermissions(
+            [FromQuery] List<int> roleIds,
+            ISender sender,
+            CancellationToken ct,
+             int pageNumber = 1,
+             int pageSize = 10)
+        {
+            APIResponse<List<GetRolePermissionsResponse>> response = new();
+            try
+            {
+                GetRolePermissionsQuery getRolePermissionsQuery = new(roleIds: new List<int>(roleIds));
+                List<GetRolePermissionsResponse> rolePermisionsResponse = await sender.Send(getRolePermissionsQuery);
+
+                response.StatusCode = HttpStatusCode.OK;
+                response.Result.Data = rolePermisionsResponse;
+                response.Result.pagination.TotalRecords = rolePermisionsResponse.Count() == 0 ? 0 : rolePermisionsResponse.First().TotalRecords;
+                response.Result.pagination.PageNumber = pageNumber;
+                response.Result.pagination.PageSize = pageSize;
+                return TypedResults.Ok(response);
+            }
+            catch
+            {
+                throw;
+            }
+        }
+
+        private static async Task<Results<Ok<APIResponse<GetRolesResponse>>, NotFound<APIResponse<List<GetRolesResponse>>>>> GetRoles(
           ISender sender,
           ClaimsPrincipal claimsPrincipal,
-          CancellationToken ct)
+          CancellationToken ct,
+          int pageNumber = 1,
+          int pageSize = 10)
         {
-            GetRolesResponse response = new();
+            APIResponse<GetRolesResponse> response = new();
             try
             {
                 string userId = claimsPrincipal.FindFirst("nameid")?.Value!
                     ?? claimsPrincipal.FindFirst(ClaimTypes.NameIdentifier)?.Value!;
 
-                response = await sender.Send(new GetRolesQuery(userId: userId));
+                GetRolesResponse rolesResponse = await sender.Send(new GetRolesQuery(userId: userId));
+
+                response.StatusCode = HttpStatusCode.OK;
+                response.Result.Data.Items = rolesResponse.Items;
+                response.Result.pagination.TotalRecords = rolesResponse.Items.Count() == 0 ? 0 : rolesResponse.Items.First().TotalRecords;
+                response.Result.pagination.PageNumber = pageNumber;
+                response.Result.pagination.PageSize = pageSize;
                 return TypedResults.Ok(response);
+
             }
             catch
             {

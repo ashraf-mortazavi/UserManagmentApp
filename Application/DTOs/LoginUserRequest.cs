@@ -11,12 +11,11 @@ namespace ManageUsers.Application.DTOs
         public string Password { get; set; }
     }
 
-    public class LoginUserResponse
+    public class LoginUserResponse : BaseResponse
     {
         [Description("توکن")]
         public string Token { get; set; }
         [Description("توکن مجدد")]
         public string RefreshToken { get; set; }
-        public string? FailedResult { get; set; }
     }
 }

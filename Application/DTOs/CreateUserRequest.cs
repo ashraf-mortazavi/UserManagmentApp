@@ -9,8 +9,9 @@ namespace ManageUsers.Application.DTOs
     {
     };
 
-    public sealed record CreateUserResponse(
-        string Id
-    );
+    public sealed class CreateUserResponse : BaseResponse
+    {
+        public string Id { get; set; }
+    }
 
 }

@@ -27,7 +27,6 @@ namespace ManageUsers.Application.Handlers
                 var user = await _userManager.FindByEmailAsync(request.Email);
                 if (user is null)
                 {
-                    response.Success = true;
                     response.FailedResult = "کاربر با این ایمیل یافت نشد!";
                     return response;
                 }
@@ -56,8 +55,6 @@ namespace ManageUsers.Application.Handlers
                     return response;
                 }
 
-                response.Success = true;
-                response.Message = "لینک بازیابی رمز عبور به ایمیل شما ارسال شد.";
             }
             catch (Exception)
             {

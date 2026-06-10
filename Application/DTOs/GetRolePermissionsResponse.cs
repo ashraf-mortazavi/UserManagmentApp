@@ -1,9 +1,8 @@
 ﻿namespace ManageUsers.Application.DTOs
 {
-    public class GetRolePermissionsResponse
+    public class GetRolePermissionsResponse :PaginationDTO
     {
         public List<RolePermissionsItem>? Items { get; set; }
-        public string? FailedResult { get; set; }
     }
 
 

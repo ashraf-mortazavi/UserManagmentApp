@@ -57,11 +57,12 @@ public class GetRolesQueryHandler : IRequestHandler<GetRolesQuery, GetRolesRespo
             foreach (var role in roleChain)
             {
                 var nextRole = roleChain.Find(role)?.Next?.Value;
-                var roleItem = new RoleItem(
-                    Id: role.Id,
-                    Name: role.Name,
-                    NextRoleName: nextRole?.Name ?? string.Empty
-                );
+                var roleItem = new RoleItem()
+                {
+                    Id = role.Id,
+                    Name = role.Name,
+                    NextRoleName = nextRole?.Name ?? string.Empty
+                };
                 roleItems.Add(roleItem);
             }
         }

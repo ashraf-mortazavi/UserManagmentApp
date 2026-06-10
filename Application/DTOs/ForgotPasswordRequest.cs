@@ -7,10 +7,8 @@ namespace ManageUsers.Application.DTOs
         [EmailAddress(ErrorMessage ="فرمت ایمیل نامعتبر است")]string Email)
     { };
 
-    public class ForgotPasswordResponse
+    public class ForgotPasswordResponse : BaseResponse
     {
-        public bool Success { get; set; }
-        public string Message { get; set; } = string.Empty;
-        public string FailedResult { get; set; } = string.Empty;
+      
     }
 }

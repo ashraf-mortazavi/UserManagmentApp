@@ -9,11 +9,10 @@ namespace ManageUsers.Application.DTOs
   );
 
 
-    public sealed class ChangeUserPasswordResponse
+    public sealed class ChangeUserPasswordResponse : BaseResponse
     {
         public string Token { get; set; }
         public string RefereshToken { get; set; }
-        public string FailedResult { get; set; }
     }
   
 }

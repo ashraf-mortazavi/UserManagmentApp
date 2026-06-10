@@ -26,7 +26,7 @@ namespace ManageUsers.Application.Handlers
         public async Task<CreateUserResponse> Handle(CreateUserCommand request, CancellationToken ct)
         {
             List<Role?> roles = await _userRepository.GetRolesAsync(request.UserRoleIds, ct);
-            if (!roles.Any() || roles is null || roles.Count ==0)
+            if (!roles.Any() || roles is null || roles.Count == 0)
             {
                 throw new Exception("RoleIds are not Valid!");
             }
@@ -55,11 +55,11 @@ namespace ManageUsers.Application.Handlers
             newUser.CreatedById = request.CreatedById;
             newUser.UserName = request.UserName;
 
-            newUser = await _userRepository.AssignUserRolesAsync(user: newUser, request.Password, roles.Select(x=> x.Name!).ToList() , cancellationToken: ct);
+            newUser = await _userRepository.AssignUserRolesAsync(user: newUser, request.Password, roles.Select(x => x.Name!).ToList(), cancellationToken: ct);
 
-            return new CreateUserResponse(
-                newUser.Id.ToString()
-            );
+            var result = new CreateUserResponse();
+            result.Id = newUser.Id.ToString();
+            return result;
         }
     }
 
