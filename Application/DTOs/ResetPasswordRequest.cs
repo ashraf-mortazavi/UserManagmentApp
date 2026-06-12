@@ -2,19 +2,7 @@
 
 namespace ManageUsers.Application.DTOs;
 
-public record ResetPasswordRequest(
-    [property: Required(ErrorMessage = "ایمیل الزامی است")]
-    [property: EmailAddress(ErrorMessage = "فرمت ایمیل نامعتبر است")]
-    string Email,
-
-    [property: Required(ErrorMessage = "رمز عبور جدید الزامی است")]
-    [property: MinLength(6, ErrorMessage = "رمز عبور باید حداقل 6 کاراکتر باشد")]
-    string NewPassword,
-
-    [property: Required(ErrorMessage = "تکرار رمز عبور الزامی است")]
-    [property: Compare("NewPassword", ErrorMessage = "رمز عبور و تکرار آن مطابقت ندارند")]
-    string ConfirmPassword
-);
+public record ResetPasswordRequest(string Email,string NewPassword,string ConfirmPassword);
 
 
 public class ResetPasswordResponse

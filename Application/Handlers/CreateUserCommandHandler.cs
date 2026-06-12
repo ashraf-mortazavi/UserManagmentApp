@@ -52,7 +52,6 @@ namespace ManageUsers.Application.Handlers
             newUser.CreatedById = request.CreatedById;
             newUser.Enabled = true;
             newUser.CreatedAt = DateTime.UtcNow;
-            newUser.CreatedById = request.CreatedById;
             newUser.UserName = request.UserName;
 
             newUser = await _userRepository.AssignUserRolesAsync(user: newUser, request.Password, roles.Select(x => x.Name!).ToList(), cancellationToken: ct);

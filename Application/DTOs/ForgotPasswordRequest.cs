@@ -2,9 +2,7 @@
 
 namespace ManageUsers.Application.DTOs
 {
-    public record ForgotPasswordRequest(
-        [Required(ErrorMessage ="ایمیل الزامی است")]
-        [EmailAddress(ErrorMessage ="فرمت ایمیل نامعتبر است")]string Email)
+    public record ForgotPasswordRequest(string Email)
     { };
 
     public class ForgotPasswordResponse : BaseResponse
