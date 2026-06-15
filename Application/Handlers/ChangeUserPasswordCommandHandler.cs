@@ -2,6 +2,7 @@
 using ManageUsers.Application.Commands;
 using ManageUsers.Application.DTOs;
 using ManageUsers.Application.Interfaces;
+using ManageUsers.Application.Services.Interfaces;
 using ManageUsers.Domain;
 using MediatR;
 using Microsoft.AspNetCore.Identity;
@@ -16,13 +17,15 @@ namespace ManageUsers.Application.Handlers
 
     public sealed class ChangeUserPasswordCommandHandler : IRequestHandler<ChangeUserPasswordCommand, ChangeUserPasswordResponse>
     {
-        private readonly IUserRepository _userRepository;
-        private readonly IUnitOfWork _unitOfWork;
+        private readonly IUserService _userService;
+        private readonly IRolePermissionService _rolePermissionService;
+        private readonly IUserRoleService _userRoleService;
 
-        public ChangeUserPasswordCommandHandler(IUserRepository userRepository, IUnitOfWork unitOfWork)
+        public ChangeUserPasswordCommandHandler(IUserService userService, IRolePermissionService rolePermissionService, IUserRoleService userRoleService)
         {
-            _userRepository = userRepository;
-            _unitOfWork = unitOfWork;
+            _userService = userService;
+            _rolePermissionService = rolePermissionService;
+            _userRoleService = userRoleService;
         }
 
         public async Task<ChangeUserPasswordResponse> Handle(ChangeUserPasswordCommand request, CancellationToken cancellationToken)
@@ -30,7 +33,7 @@ namespace ManageUsers.Application.Handlers
             User user;
             ChangeUserPasswordResponse changeUserPasswordResponse = new();
 
-            user = await _userRepository.GetUserByIdAsync(request.UserId);
+            user = await _userService.GetUserByIdAsync(request.UserId);
 
             if (user is null)
             {
@@ -38,7 +41,7 @@ namespace ManageUsers.Application.Handlers
                 return changeUserPasswordResponse;
             }
 
-            bool isExist = await _userRepository.CheckPasswordAsync(user, request.CurrentPassword);
+            bool isExist = await _userService.CheckPasswordAsync(user, request.CurrentPassword);
 
             if (!isExist)
             {
@@ -52,7 +55,7 @@ namespace ManageUsers.Application.Handlers
                 return changeUserPasswordResponse;
             }
 
-            IdentityResult identityResult = await _userRepository.SetPasswordByUserIdAsync(user.Id.ToString(), request.NewPassword);
+            IdentityResult identityResult = await _userService.SetPasswordByUserIdAsync(user.Id.ToString(), request.NewPassword);
 
             if (!identityResult.Succeeded)
             {
@@ -60,16 +63,16 @@ namespace ManageUsers.Application.Handlers
                 return changeUserPasswordResponse;
             }
 
-        
-            List<IdentityUserRole<int>> identityUserRoles = await _userRepository.GetUserRole(user.Id);
-            Dictionary<int, List<int>> mapRolePermissions = await _userRepository.GetRolePermissions(identityUserRoles, cancellationToken);
-            List<int> roleIds = new();
+
+            List<IdentityUserRole<string>> identityUserRoles = await _userRoleService.GetUserRole(user.Id, cancellationToken);
+            Dictionary<string, List<string>> mapRolePermissions = await _rolePermissionService.GetRolePermissionsByUserRolesAsync(identityUserRoles, cancellationToken);
+            List<string> roleIds = new();
             foreach (var item in mapRolePermissions)
             {
                 roleIds.Add(item.Key);
             }
 
-            List<RolePermission> rolePermissions = await _userRepository.GetRolePermisionsByRoleIds(roleIds, cancellationToken);
+            List<RolePermission> rolePermissions = await _rolePermissionService.GetRolePermisionsByRoleIdsAsync(roleIds, cancellationToken);
 
 
             CreateTokenContext ctx = new CreateTokenContext
@@ -81,11 +84,11 @@ namespace ManageUsers.Application.Handlers
             };
 
             // JWT Code
-            JWEToken tokenDTO = await _userRepository.CreateTokenAsync(ctx, cancellationToken: cancellationToken);
+            JWEToken tokenDTO = await _userService.CreateTokenAsync(ctx, cancellationToken: cancellationToken);
 
             changeUserPasswordResponse.Token = tokenDTO.Token;
             changeUserPasswordResponse.RefereshToken = tokenDTO.RefreshToken;
-          
+
             return changeUserPasswordResponse;
         }
     }

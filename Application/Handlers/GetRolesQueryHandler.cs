@@ -2,6 +2,7 @@
 using ManageUsers.Application.DTOs;
 using ManageUsers.Application.Interfaces;
 using ManageUsers.Application.Queries;
+using ManageUsers.Application.Services.Interfaces;
 using ManageUsers.Domain;
 using MediatR;
 using Microsoft.AspNetCore.Identity;
@@ -10,48 +11,50 @@ using System.Collections.Generic;
 namespace ManageUsers.Application.Handlers;
 public class GetRolesQueryHandler : IRequestHandler<GetRolesQuery, GetRolesResponse>
 {
-    private readonly IUserRepository _userRepository;
+    private readonly IUserService _userService;
+    private readonly IRoleService _roleService;
+    private readonly IUserRoleService _userRoleService;
 
-    public GetRolesQueryHandler(IUserRepository userRepository)
+    public GetRolesQueryHandler(IUserService userService, IRoleService roleService, IUserRoleService userRoleService)
     {
-        _userRepository = userRepository;
+        _userService = userService;
+        _roleService = roleService;
+        _userRoleService = userRoleService; 
     }
     public async Task<GetRolesResponse> Handle(GetRolesQuery request, CancellationToken cancellationToken)
     {
         GetRolesResponse roleResponse = new();
-        User user = await _userRepository.GetUserByIdAsync(request.UserId);
+        User user = await _userService.GetUserByIdAsync(request.UserId, ct: cancellationToken);
         if (user is null)
         {
-            roleResponse= new GetRolesResponse()
-            {
-                FailedResult = "کاربر یافت نشد!"
-            };
+
+            roleResponse.FailedResult = "کاربر مورد نظر یافت نشد!";
             return roleResponse;
         }
 
-        List<IdentityUserRole<int>> identityUserRoles = await _userRepository.GetUserRole(user.Id);
-        List<int> userRoleIds = identityUserRoles.Select(x => x.RoleId).ToList();
+        List<IdentityUserRole<string>> identityUserRoles = await _userRoleService.GetUserRole(user.Id, cancellationToken: cancellationToken);
+        List<string> userRoleIds = identityUserRoles.Select(x => x.RoleId).ToList();
 
-        List<Role> allRoles = await _userRepository.GetAllRolesAsync(cancellationToken);
+        List<Role> allRoles = await _roleService.GetAllRolesAsync(cancellationToken);
 
-        Dictionary<int, Role> roleDictionary = allRoles.ToDictionary(r => r.Id, r => r);
+        Dictionary<string, Role> roleDictionary = allRoles.ToDictionary(r => r.Id.ToString(), r => r);
 
         List<RoleItem> roleItems = new List<RoleItem>();
 
-        foreach (int userRoleId in userRoleIds)
+        foreach (string userRoleId in userRoleIds)
         {
             if (!roleDictionary.ContainsKey(userRoleId))
                 continue;
 
             // Create LinkedList and add nodes
             LinkedList<Role> roleChain = new LinkedList<Role>();
-            int? currentId = userRoleId;
+            string? currentId = userRoleId;
 
-            while (currentId.HasValue && roleDictionary.ContainsKey(currentId.Value))
+            while (!string.IsNullOrEmpty(currentId) && roleDictionary.ContainsKey(currentId))
             {
-                Role currentRole = roleDictionary[currentId.Value];
+                Role currentRole = roleDictionary[currentId];
                 roleChain.AddLast(currentRole);
-                currentId = currentRole.NextLowerRoleId;
+                currentId = currentRole.NextLowerRoleId.ToString();
             }
 
             foreach (var role in roleChain)

@@ -14,14 +14,15 @@ public class UnitOfWork : IUnitOfWork
     public IRoleRepository Roles { get; }
     public IUserRoleRepository UserRoles { get; }
     public IRolePermissionRepository RolePermissions { get; }
-    public IOrganizationService Organizations { get; }
+    public IOrganizationRepository Organizations { get; }
+
 
     public UnitOfWork(AppDbContext appDbContext,
         IUserRepository users,
         IRoleRepository roles,
         IUserRoleRepository userRoles,
         IRolePermissionRepository rolePermissions,
-        IOrganizationService organizations
+        IOrganizationRepository organizations
         )
 
     {

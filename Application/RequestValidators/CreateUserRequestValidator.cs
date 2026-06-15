@@ -63,36 +63,40 @@ namespace ManageUsers.Application.RequestValidators
                 .NotEmpty()
                 .WithMessage(nameof(CreateUserRequest.UserRoleIds).GetNullOrEmptyErrorMessage(typeof(CreateUserRequest)));
 
-            RuleForEach(o => o.UserRoleIds)
-                .GreaterThan(0)
-                .WithMessage(nameof(CreateUserRequest.UserRoleIds).GetGreaterThanErrorMessage(typeof(CreateUserRequest), 0));
-
 
             RuleFor(x => x.AreaId)
                 .NotNull()
-                .When(x => x.OrganizationId.HasValue && x.OrganizationId.Value > 0)
+                .When(x => !x.OrganizationId.HasValue)
                 .WithMessage(nameof(CreateUserRequest.AreaId).GetNullOrEmptyErrorMessage(typeof(CreateUserRequest)))
                 .NotEmpty()
-                .When(x => x.OrganizationId.HasValue && x.OrganizationId.Value > 0)
-                .WithMessage(nameof(CreateUserRequest.AreaId).GetNullOrEmptyErrorMessage(typeof(CreateUserRequest)));
+                .When(x => !x.OrganizationId.HasValue)
+                .WithMessage(nameof(CreateUserRequest.AreaId).GetNullOrEmptyErrorMessage(typeof(CreateUserRequest)))
+                .GreaterThan(0)
+                .When(x => !x.OrganizationId.HasValue)
+                .WithMessage(nameof(CreateUserRequest.AreaId).GetGreaterThanErrorMessage(typeof(CreateUserRequest), 0));
+
 
             RuleFor(x => x.RegionId)
                 .NotNull()
-                .When(x => x.OrganizationId.HasValue && x.OrganizationId.Value > 0)
+                .When(x => !x.OrganizationId.HasValue)
                 .WithMessage(nameof(CreateUserRequest.RegionId).GetNullOrEmptyErrorMessage(typeof(CreateUserRequest)))
                 .NotEmpty()
-                .When(x => x.OrganizationId.HasValue && x.OrganizationId.Value > 0)
-                .WithMessage(nameof(CreateUserRequest.RegionId).GetNullOrEmptyErrorMessage(typeof(CreateUserRequest)));
-
+                .When(x => !x.OrganizationId.HasValue)
+                .WithMessage(nameof(CreateUserRequest.RegionId).GetNullOrEmptyErrorMessage(typeof(CreateUserRequest)))
+                .GreaterThan(0)
+                .When(x => !x.OrganizationId.HasValue)
+                .WithMessage(nameof(CreateUserRequest.RegionId).GetGreaterThanErrorMessage(typeof(CreateUserRequest), 0));
 
             RuleFor(x => x.OrganizationId)
                .NotNull()
-               .When(x => x.AreaId.HasValue && x.RegionId.HasValue && x.AreaId.Value > 0 && x.RegionId.Value > 0)
+               .When(x => !x.AreaId.HasValue && !x.RegionId.HasValue)
                .WithMessage(nameof(CreateUserRequest.RegionId).GetNullOrEmptyErrorMessage(typeof(CreateUserRequest)))
                .NotEmpty()
-               .When(x => x.AreaId.HasValue && x.RegionId.HasValue)
-               .WithMessage(nameof(CreateUserRequest.RegionId).GetNullOrEmptyErrorMessage(typeof(CreateUserRequest)));
-
+               .When(x => !x.AreaId.HasValue && !x.RegionId.HasValue)
+               .WithMessage(nameof(CreateUserRequest.RegionId).GetNullOrEmptyErrorMessage(typeof(CreateUserRequest)))
+               .GreaterThan(0)
+               .When(x => !x.AreaId.HasValue && !x.RegionId.HasValue)
+               .WithMessage(nameof(CreateUserRequest.OrganizationId).GetGreaterThanErrorMessage(typeof(CreateUserRequest), 0));
         }
     }
 }

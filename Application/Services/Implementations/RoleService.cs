@@ -15,13 +15,13 @@ namespace ManageUsers.Application.Services.Implementations
             return await _roleManager.Roles.ToListAsync(cancellationToken: ct);
         }
 
-        public async Task<List<Role?>> GetRolesAsync(List<int> roleIds, CancellationToken cancellationToken = default)
+        public async Task<List<Role?>> GetRolesAsync(List<string> roleIds, CancellationToken cancellationToken = default)
         {
             if (roleIds is null || roleIds.Count == 0 || !roleIds.Any())
             {
                 return new List<Role>();
             }
-            return await _roleManager.Roles.Where(r => roleIds.Contains(r.Id)!).ToListAsync(cancellationToken);
+            return await _roleManager.Roles.Where(r => roleIds.Contains(r.Id.ToString())!).ToListAsync(cancellationToken);
         }
     }
 }

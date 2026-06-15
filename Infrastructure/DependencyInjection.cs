@@ -17,7 +17,6 @@ namespace ManageUsers.Infrastructure
 
             services.AddScoped<IUserRepository, UserRepository>();
             services.AddScoped<IUnitOfWork, UnitOfWork>();
-            services.AddSingleton<IPasswordHasher, PasswordHasher>();
 
             return services;
         }

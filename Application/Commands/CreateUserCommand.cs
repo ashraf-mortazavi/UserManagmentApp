@@ -9,7 +9,7 @@ namespace ManageUsers.Application.Commands
         string? Position, string? Description,
         bool Enabled, DateTime CreatedAt,
         int? OrganizationId, int? AreaId, int? RegionId,
-        string CreatedById, List<int> UserRoleIds
+        string CreatedById, List<string> UserRoleIds
         ) :  IRequest<CreateUserResponse>
     {};
 }

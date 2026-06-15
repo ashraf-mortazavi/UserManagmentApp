@@ -8,27 +8,27 @@ namespace ManageUsers.Application.Services.Implementations
     public class RolePermissionService(IUnitOfWork unitOfWork) : IRolePermissionService
     {
         private readonly IUnitOfWork _unitOfWork = unitOfWork;
-        public async Task<List<RolePermission>> GetRolePermisionsByRoleIdsAsync(List<int> roleIds, CancellationToken cancellationToken = default)
+        public async Task<List<RolePermission>> GetRolePermisionsByRoleIdsAsync(List<string> roleIds, CancellationToken cancellationToken = default)
         {
             if (roleIds is null || roleIds.Count == 0)
             {
                 return new List<RolePermission>();
             }
 
-            List<string> existingRoleIds = await _unitOfWork.Roles.GetRolesAsync(roleIds: roleIds, cancellationToken: cancellationToken);
+            List<Role> existingRoles = await _unitOfWork.Roles.GetRolesAsync(roleIds: roleIds, cancellationToken: cancellationToken);
 
-            if (!existingRoleIds.Any())
+            if (!existingRoles.Any())
             {
                 return new List<RolePermission>();
             }
 
             List<RolePermission> rolePermissions = await _unitOfWork.RolePermissions
-                .GetRolePermisionsByRoleIds(existingRoleIds, cancellationToken);
+                .GetRolePermisionsByRoleIds(existingRoles.Select(e => e.Id.ToString()).ToList(), cancellationToken);
 
             return rolePermissions;
         }
 
-        public async Task<Dictionary<int, List<int>>> GetRolePermissionsByUserRolesAsync(IEnumerable<IdentityUserRole<string>> identityUserRoles, CancellationToken cancellationToken = default)
+        public async Task<Dictionary<string, List<string>>> GetRolePermissionsByUserRolesAsync(IEnumerable<IdentityUserRole<string>> identityUserRoles, CancellationToken cancellationToken = default)
         {
             List<RolePermission> rolePermissions = [];
 
@@ -38,10 +38,10 @@ namespace ManageUsers.Application.Services.Implementations
                 .ToList();
 
 
-            var permisionRoloPaires = await _unitOfWork.RolePermissions
+             rolePermissions = await _unitOfWork.RolePermissions
                  .GetRolePermisionsByRoleIds(roleIds, cancellationToken);
 
-            var x = permisionRoloPaires
+            var permisionRoloPaires = rolePermissions
                 .Select(rp => new { rp.PermissionId, rp.RoleId })
                 .Distinct()
                 .ToList();
@@ -51,8 +51,8 @@ namespace ManageUsers.Application.Services.Implementations
             var permissionRolesMap = permisionRoloPaires
                 .GroupBy(x => x.RoleId)
                 .ToDictionary(
-                    g => g.Key,
-                    g => g.Select(x => x.PermissionId)
+                    g => g.Key.ToString(),
+                    g => g.Select(x => x.PermissionId.ToString())
                           .Distinct()
                           .ToList()
                 );

@@ -12,13 +12,13 @@ namespace ManageUsers.Infrastructure.Repositories
         {
             _context = context;
         }
-        public async Task<List<IdentityUserRole<int>>> GetUserRolesAsync(int userId, CancellationToken cancellationToken)
+        public async Task<List<IdentityUserRole<string>>> GetUserRolesAsync(int userId, CancellationToken cancellationToken)
         {
             return await _context.UserRoles.Where(u => u.UserId == userId)
-               .Select(ur => new IdentityUserRole<int>
+               .Select(ur => new IdentityUserRole<string>
                {
-                   UserId = userId,
-                   RoleId = ur.RoleId
+                   UserId = userId.ToString(),
+                   RoleId = ur.RoleId.ToString()
                }).ToListAsync(cancellationToken);
         }
     }

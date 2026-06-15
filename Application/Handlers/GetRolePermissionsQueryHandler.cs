@@ -2,6 +2,7 @@
 using ManageUsers.Application.DTOs;
 using ManageUsers.Application.Interfaces;
 using ManageUsers.Application.Queries;
+using ManageUsers.Application.Services.Interfaces;
 using ManageUsers.Domain;
 using MediatR;
 using System.Collections.Generic;
@@ -9,18 +10,20 @@ using System.Collections.Generic;
 namespace ManageUsers.Application.Handlers;
 public class GetRolePermissionsQueryHandler : IRequestHandler<GetRolePermissionsQuery, List<GetRolePermissionsResponse>>
 {
-    private readonly IUserRepository _userRepository;
+    private readonly IRoleService _roleService;
+    private readonly IRolePermissionService _rolePermissionService;
 
-    public GetRolePermissionsQueryHandler(IUserRepository userRepository)
+    public GetRolePermissionsQueryHandler(IRoleService roleService, IRolePermissionService rolePermissionService)
     {
-        _userRepository = userRepository;
+        _roleService = roleService;
+        _rolePermissionService = rolePermissionService;
     }
     public async Task<List<GetRolePermissionsResponse>> Handle(GetRolePermissionsQuery request, CancellationToken cancellationToken)
     {
         List<GetRolePermissionsResponse> rolePermissionsResponses = new();
         List<RolePermissionsItem> items = new();
 
-        List<Role> roles = await _userRepository.GetRolesAsync(request.RoleIds, cancellationToken);
+        List<Role?> roles = await _roleService.GetRolesAsync(request.RoleIds, cancellationToken);
 
         if (roles == null || !roles.Any())
         {
@@ -32,7 +35,7 @@ public class GetRolePermissionsQueryHandler : IRequestHandler<GetRolePermissions
         }
         List<RoleDto> roleDtos = roles.Select(r => new RoleDto (Id: r.Id, Name: r.Name)).ToList();
 
-        List<RolePermission> rolePermissions = await _userRepository.GetRolePermisionsByRoleIds(request.RoleIds, cancellationToken);
+        List<RolePermission> rolePermissions = await _rolePermissionService.GetRolePermisionsByRoleIdsAsync(request.RoleIds, cancellationToken);
 
         List<PermissionDto> permissionDtos = rolePermissions
             .Select(rp => rp.Permission)

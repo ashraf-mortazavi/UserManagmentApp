@@ -5,7 +5,7 @@ namespace ManageUsers.Application.DTOs
         string NationalCode, string? Email, string? PostalCode, string UserName, string Password,
         string? PersonalCode, string? Position, string? Description, 
         int? OrganizationId, int? AreaId,int? RegionId,
-        List<int> UserRoleIds)
+        List<string> UserRoleIds)
     {
     };
 

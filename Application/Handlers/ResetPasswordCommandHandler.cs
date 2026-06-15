@@ -1,6 +1,7 @@
 ﻿using ManageUsers.Application.Commands;
 using ManageUsers.Application.DTOs;
 using ManageUsers.Application.Interfaces;
+using ManageUsers.Application.Services.Interfaces;
 using ManageUsers.Domain;
 using MediatR;
 using Microsoft.AspNetCore.Identity;
@@ -9,14 +10,20 @@ namespace ManageUsers.Application.Handlers;
 public sealed class ResetPasswordCommandHandler : IRequestHandler<ResetPasswordUserCommand, ResetPasswordResponse>
 {
     private readonly UserManager<User> _userManager;
-    private readonly IUserRepository _userRepository;
+    private readonly IUserService _userService;
+    private readonly IUserRoleService _userRoleService;
+    private readonly IRolePermissionService _rolePermissionService;
 
     public ResetPasswordCommandHandler(
         UserManager<User> userManager,
-        IUserRepository userRepository)
+        IUserService userService,
+        IUserRoleService userRoleService,
+        IRolePermissionService rolePermissionService)
     {
         _userManager = userManager;
-        _userRepository = userRepository;
+        _userService = userService;
+        _userRoleService = userRoleService;
+        _rolePermissionService = rolePermissionService;
     }
     public async Task<ResetPasswordResponse> Handle(ResetPasswordUserCommand request, CancellationToken cancellationToken)
     {
@@ -50,7 +57,7 @@ public sealed class ResetPasswordCommandHandler : IRequestHandler<ResetPasswordU
             await _userManager.UpdateSecurityStampAsync(user);
 
 
-            IdentityResult identityResult = await _userRepository.SetPasswordByUserIdAsync(user.Id.ToString(), request.NewPassword);
+            IdentityResult identityResult = await _userService.SetPasswordByUserIdAsync(user.Id.ToString(), request.NewPassword);
 
             if (!identityResult.Succeeded)
             {
@@ -59,15 +66,15 @@ public sealed class ResetPasswordCommandHandler : IRequestHandler<ResetPasswordU
             }
 
 
-            List<IdentityUserRole<int>> identityUserRoles = await _userRepository.GetUserRole(user.Id);
-            Dictionary<int, List<int>> mapRolePermissions = await _userRepository.GetRolePermissions(identityUserRoles, cancellationToken);
-            List<int> roleIds = new();
+            List<IdentityUserRole<string>> identityUserRoles = await _userRoleService.GetUserRole(user.Id, cancellationToken: cancellationToken);
+            Dictionary<string, List<string>> mapRolePermissions = await _rolePermissionService.GetRolePermissionsByUserRolesAsync(identityUserRoles, cancellationToken);
+            List<string> roleIds = new();
             foreach (var item in mapRolePermissions)
             {
                 roleIds.Add(item.Key);
             }
 
-            List<RolePermission> rolePermissions = await _userRepository.GetRolePermisionsByRoleIds(roleIds, cancellationToken);
+            List<RolePermission> rolePermissions = await _rolePermissionService.GetRolePermisionsByRoleIdsAsync(roleIds, cancellationToken);
 
 
             CreateTokenContext ctx = new CreateTokenContext
@@ -78,7 +85,7 @@ public sealed class ResetPasswordCommandHandler : IRequestHandler<ResetPasswordU
                 RolePermissions = rolePermissions,
             };
 
-            JWEToken tokenDTO = await _userRepository.CreateTokenAsync(ctx, cancellationToken: cancellationToken);
+            JWEToken tokenDTO = await _userService.CreateTokenAsync(ctx, cancellationToken: cancellationToken);
 
             response.Success = true;
             response.Message = "رمز عبور با موفقیت تغییر یافت.";

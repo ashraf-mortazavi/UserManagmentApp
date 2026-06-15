@@ -63,8 +63,6 @@ builder.Services.ConfigureApplicationCookie(options =>
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
-// Services
-builder.Services.AddSingleton<IPasswordHasher, PasswordHasher>();
 
 builder.Services.AddMediatR(cfg =>
     cfg.RegisterServicesFromAssembly(typeof(CreateUserCommandHandler).Assembly));

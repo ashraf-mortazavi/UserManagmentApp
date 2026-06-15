@@ -5,8 +5,8 @@ namespace ManageUsers.Application.Services.Interfaces
 {
     public interface IRolePermissionService
     {
-        Task<Dictionary<int, List<int>>> GetRolePermissionsByUserRolesAsync(IEnumerable<IdentityUserRole<int>> identityUserRoles, CancellationToken cancellationToken = default);
+        Task<Dictionary<string, List<string>>> GetRolePermissionsByUserRolesAsync(IEnumerable<IdentityUserRole<string>> identityUserRoles, CancellationToken cancellationToken = default);
 
-        Task<List<RolePermission>> GetRolePermisionsByRoleIdsAsync(List<int> roleIds, CancellationToken cancellationToken = default);
+        Task<List<RolePermission>> GetRolePermisionsByRoleIdsAsync(List<string> roleIds, CancellationToken cancellationToken = default);
     }
 }

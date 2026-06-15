@@ -15,10 +15,5 @@ namespace ManageUsers.Infrastructure.Repositories
                   .Where(rp => roleIds.Contains(rp.RoleId.ToString()))
                   .ToListAsync(cancellationToken);
         }
-
-        public Task<Dictionary<int, List<int>>> GetRolePermissions(IEnumerable<IdentityUserRole<int>> identityUserRoles, CancellationToken cancellationToken = default)
-        {
-            throw new NotImplementedException();
-        }
     }
 }

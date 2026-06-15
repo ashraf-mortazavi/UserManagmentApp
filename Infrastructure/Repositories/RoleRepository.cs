@@ -8,11 +8,9 @@ namespace ManageUsers.Infrastructure.Repositories
     public class RoleRepository (AppDbContext appDbContext) : IRoleRepository
     {
         private readonly AppDbContext _appDbContext = appDbContext;
-        public async Task<List<string>> GetRolesAsync(List<int> roleIds, CancellationToken cancellationToken)
+        public async Task<List<Role>> GetRolesAsync(List<string> roleIds, CancellationToken cancellationToken)
         {
-            return await _appDbContext.Roles.Where(r => roleIds.Contains(r.Id))
-                .Select(r => r.Id.ToString())
-                .ToListAsync(cancellationToken);
+            return await _appDbContext.Roles.Where(r => roleIds.Contains(r.Id.ToString())).ToListAsync(cancellationToken);
         }
     }
 }

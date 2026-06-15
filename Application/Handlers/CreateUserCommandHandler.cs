@@ -1,6 +1,8 @@
-﻿using ManageUsers.Application.Commands;
+﻿using Azure;
+using ManageUsers.Application.Commands;
 using ManageUsers.Application.DTOs;
 using ManageUsers.Application.Interfaces;
+using ManageUsers.Application.Services.Interfaces;
 using ManageUsers.Domain;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
@@ -14,26 +16,31 @@ namespace ManageUsers.Application.Handlers
 
     public sealed class CreateUserCommandHandler : IRequestHandler<CreateUserCommand, CreateUserResponse>
     {
-        private readonly IUserRepository _userRepository;
-        private readonly IUnitOfWork _unitOfWork;
+        private readonly IRoleService _roleService;
+        private readonly IUserService _userService;
+        private readonly IOrganizationService _organizationService;
 
-        public CreateUserCommandHandler(IUserRepository userRepository, IUnitOfWork unitOfWork)
+        public CreateUserCommandHandler(IRoleService roleService, IUserService userService, IOrganizationService organizationService)
         {
-            _userRepository = userRepository;
-            _unitOfWork = unitOfWork;
+            _roleService = roleService;
+            _userService = userService;
+            _organizationService = organizationService;
         }
 
         public async Task<CreateUserResponse> Handle(CreateUserCommand request, CancellationToken ct)
         {
-            List<Role?> roles = await _userRepository.GetRolesAsync(request.UserRoleIds, ct);
+            CreateUserResponse userResponse = new();
+            List<Role?> roles = await _roleService.GetRolesAsync(request.UserRoleIds, ct);
+
             if (!roles.Any() || roles is null || roles.Count == 0)
             {
-                throw new Exception("RoleIds are not Valid!");
+                userResponse.FailedResult = "نقش مورد نظر یافت نشد!";
+                return userResponse;
             }
-
+            Organization organization = null;
             if (request.OrganizationId.HasValue)
             {
-                Organization organization = await _userRepository.OrganizationExistsAsync(request.OrganizationId!.Value, ct);
+                organization= await _organizationService.GetOrganizationAsync(request.OrganizationId!.Value, ct);
             }
 
             User newUser = new User();
@@ -46,7 +53,7 @@ namespace ManageUsers.Application.Handlers
             newUser.RegionId = request.RegionId;
             newUser.AreaId = request.AreaId;
             newUser.Description = request.Description;
-            newUser.OrganizationId = request.OrganizationId;
+            newUser.OrganizationId = organization != null ? organization.Id : null ;
             newUser.PersonalCode = request.PersonalCode;
             newUser.Position = request.Position;
             newUser.CreatedById = request.CreatedById;
@@ -54,11 +61,10 @@ namespace ManageUsers.Application.Handlers
             newUser.CreatedAt = DateTime.UtcNow;
             newUser.UserName = request.UserName;
 
-            newUser = await _userRepository.AssignUserRolesAsync(user: newUser, request.Password, roles.Select(x => x.Name!).ToList(), cancellationToken: ct);
+            newUser = await _userService.AssignUserRolesAsync(user: newUser, request.Password, roles.Select(x => x.Name!).ToList(), cancellationToken: ct);
 
-            var result = new CreateUserResponse();
-            result.Id = newUser.Id.ToString();
-            return result;
+            userResponse.Id = newUser.Id.ToString();
+            return userResponse;
         }
     }
 

@@ -1,6 +1,7 @@
 ﻿using ManageUsers.Application.Commands;
 using ManageUsers.Application.DTOs;
 using ManageUsers.Application.Interfaces;
+using ManageUsers.Application.Services.Interfaces;
 using ManageUsers.Domain;
 using MediatR;
 using Microsoft.AspNetCore.Http;
@@ -10,13 +11,15 @@ namespace ManageUsers.Application.Handlers
 {
     public class LoginUserCommandHandler : IRequestHandler<LoginUserCommand, LoginUserResponse>
     {
-        private readonly IUserRepository _userRepository;
-        private readonly IUnitOfWork _unitOfWork;
+        private readonly IUserService _userService;
+        private readonly IUserRoleService _userRoleService;
+        private readonly IRolePermissionService _rolePermissionService;
 
-        public LoginUserCommandHandler(IUserRepository userRepository, IUnitOfWork unitOfWork)
+        public LoginUserCommandHandler(IUserService userService, IUserRoleService userRoleService, IRolePermissionService rolePermissionService)
         {
-            _userRepository = userRepository;
-            _unitOfWork = unitOfWork;
+            _userService = userService;
+            _userRoleService = userRoleService;
+            _rolePermissionService = rolePermissionService;
         }
 
         public async Task<LoginUserResponse> Handle(LoginUserCommand request, CancellationToken cancellationToken)
@@ -24,7 +27,7 @@ namespace ManageUsers.Application.Handlers
             User? user;
             LoginUserResponse response = new();
 
-            user = await _userRepository.GetByUserNameAsync(userName: request.UserName, ct: cancellationToken);
+            user = await _userService.GetByUserNameAsync(userName: request.UserName, ct: cancellationToken);
 
             if (user is null)
             {
@@ -37,22 +40,22 @@ namespace ManageUsers.Application.Handlers
                 return response;
             }
 
-            bool checkPassword = await _userRepository.CheckPasswordAsync(user: user, password: request.Password);
+            bool checkPassword = await _userService.CheckPasswordAsync(user: user, password: request.Password);
 
             if (!checkPassword)
             {
                 response.FailedResult = "رمز ورود اشتباه است!";
                 return response;
             }
-            List<IdentityUserRole<int>> identityUserRoles = await _userRepository.GetUserRole(user.Id);
-            Dictionary<int, List<int>> mapRolePermissions = await _userRepository.GetRolePermissions(identityUserRoles, cancellationToken);
-            List<int> roleNames = new();
+            List<IdentityUserRole<string>> identityUserRoles = await _userRoleService.GetUserRole(user.Id, cancellationToken: cancellationToken);
+            Dictionary<string, List<string>> mapRolePermissions = await _rolePermissionService.GetRolePermissionsByUserRolesAsync(identityUserRoles, cancellationToken);
+            List<string> roleIds = new();
             foreach (var item in mapRolePermissions)
             {
-                roleNames.Add(item.Key);
+                roleIds.Add(item.Key);
             }
 
-            List<RolePermission> rolePermissions = await _userRepository.GetRolePermisionsByRoleIds(roleNames, cancellationToken);
+            List<RolePermission> rolePermissions = await _rolePermissionService.GetRolePermisionsByRoleIdsAsync(roleIds, cancellationToken);
 
             CreateTokenContext ctx = new CreateTokenContext
             {
@@ -63,7 +66,7 @@ namespace ManageUsers.Application.Handlers
             };
 
             // JWT Code
-            JWEToken tokenDTO = await _userRepository.CreateTokenAsync(ctx, cancellationToken: cancellationToken);
+            JWEToken tokenDTO = await _userService.CreateTokenAsync(ctx, cancellationToken: cancellationToken);
        
             response.Token = tokenDTO.Token;
             response.RefreshToken = tokenDTO.RefreshToken;
