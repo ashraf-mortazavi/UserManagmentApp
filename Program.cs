@@ -1,7 +1,10 @@
+using ManageUsers.APIs.Extentions;
 using ManageUsers.Application;
 using ManageUsers.Application.Commands;
 using ManageUsers.Application.Handlers;
 using ManageUsers.Application.Interfaces;
+using ManageUsers.Application.Services.Implementations;
+using ManageUsers.Application.Services.Interfaces;
 using ManageUsers.Controllers;
 using ManageUsers.Domain;
 using ManageUsers.Infrastructure.Persistence;
@@ -60,8 +63,22 @@ builder.Services.ConfigureApplicationCookie(options =>
     };
 });
 
-builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<IUserRoleService, UserRoleService>();
+builder.Services.AddScoped<IRoleService, RoleService>();
+builder.Services.AddScoped<IRolePermissionService, RolePermissionService>();
+builder.Services.AddScoped<IOrganizationService, OrganizationService>();
+builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<IRoleRepository, RoleRepository>();
+builder.Services.AddScoped<IUserRoleRepository, UserRoleRepository>();
+builder.Services.AddScoped<IRolePermissionRepository, RolePermissionRepository>();
+builder.Services.AddScoped<IOrganizationRepository, OrganizationRepository>();
+
+
+builder.Services.AddScoped<IEmailService, EmailService>();
+builder.Services.AddTransient<IEmailSender, NoOpEmailSender>();
+
 
 
 builder.Services.AddMediatR(cfg =>
@@ -114,8 +131,6 @@ builder.Services.AddAuthentication(options =>
         };
     });
 
-builder.Services.AddScoped<IEmailService, EmailService>();
-builder.Services.AddTransient<IEmailSender, NoOpEmailSender>();
 
 builder.Services.AddHttpContextAccessor();
 
@@ -125,6 +140,8 @@ builder.Services.AddOpenApi();
 builder.Services.AddEndpointsApiExplorer();
 
 var app = builder.Build();
+
+app.ResponseHandling(app.Logger);
 
 
 // Configure the HTTP request pipeline.
