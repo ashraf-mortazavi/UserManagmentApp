@@ -1,3 +1,4 @@
+using ManageUsers.APIs;
 using ManageUsers.APIs.Extentions;
 using ManageUsers.Application;
 using ManageUsers.Application.Commands;
@@ -34,6 +35,19 @@ builder.Services.AddDbContext<AppDbContext>(opt =>
             maxRetryDelay: TimeSpan.FromSeconds(10),
             errorNumbersToAdd: null);
     }));
+
+bool enableSwagger = true;
+
+if (enableSwagger)
+{
+    //Add Swagger with a Document as a XML File
+    builder.Services.AddSwaggerGen(options =>
+    {
+        options.DocumentFilter<SwaggerAddEnumDescriptions>();
+        options.UseInlineDefinitionsForEnums();
+    });
+}
+
 
 builder.Services.AddIdentity<User, Role>(option =>
 {

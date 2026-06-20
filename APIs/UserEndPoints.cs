@@ -262,7 +262,7 @@ namespace ManageUsers.Controllers
 
 
         private static async Task<Results<Ok<APIResponse<List<GetRolePermissionsResponse>>>, NotFound<APIResponse<List<GetRolePermissionsResponse>>>>> GetRolePermissions(
-            [FromQuery] List<string> roleIds,
+            [FromQuery] string[] roleIds,
             ISender sender,
             CancellationToken ct,
              int pageNumber = 1,
@@ -271,7 +271,7 @@ namespace ManageUsers.Controllers
             APIResponse<List<GetRolePermissionsResponse>> response = new();
             try
             {
-                GetRolePermissionsQuery getRolePermissionsQuery = new(roleIds: roleIds);
+                GetRolePermissionsQuery getRolePermissionsQuery = new(roleIds: roleIds.ToList());
                 List<GetRolePermissionsResponse> rolePermisionsResponse = await sender.Send(getRolePermissionsQuery);
 
                 response.StatusCode = HttpStatusCode.OK;
