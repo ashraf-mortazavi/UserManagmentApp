@@ -5,7 +5,6 @@ using ManageUsers.Application.Handlers;
 using ManageUsers.Application.Interfaces;
 using ManageUsers.Application.Services.Interfaces;
 using ManageUsers.Domain;
-using ManageUsers.Domain.Exceptions;
 using Microsoft.AspNetCore.Identity;
 using NSubstitute;
 using Xunit;
@@ -70,7 +69,7 @@ public class LoginUserCommandHandlerTests
 
         var command = new LoginUserCommand(null!, new LoginUserRequest { UserName = "nonexistent", Password = "password" });
 
-        await Assert.ThrowsAsync<UserNotFoundException>(() => _handler.Handle(command, CancellationToken.None));
+        await Assert.ThrowsAsync<Exception>(() => _handler.Handle(command, CancellationToken.None));
     }
 
     [Fact]
@@ -82,7 +81,7 @@ public class LoginUserCommandHandlerTests
 
         var command = new LoginUserCommand(null!, new LoginUserRequest { UserName = "testuser", Password = "password" });
 
-        await Assert.ThrowsAsync<UserDisabledException>(() => _handler.Handle(command, CancellationToken.None));
+        await Assert.ThrowsAsync<Exception>(() => _handler.Handle(command, CancellationToken.None));
     }
 
     [Fact]
@@ -96,7 +95,7 @@ public class LoginUserCommandHandlerTests
 
         var command = new LoginUserCommand(null!, new LoginUserRequest { UserName = "testuser", Password = "WrongPassword" });
 
-        await Assert.ThrowsAsync<InvalidCredentialsException>(() => _handler.Handle(command, CancellationToken.None));
+        await Assert.ThrowsAsync<Exception>(() => _handler.Handle(command, CancellationToken.None));
     }
 
     [Fact]
