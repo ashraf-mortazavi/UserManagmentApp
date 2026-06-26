@@ -78,7 +78,9 @@ builder.Services.AddScoped<IUserRoleRepository, UserRoleRepository>();
 builder.Services.AddScoped<IRolePermissionRepository, RolePermissionRepository>();
 builder.Services.AddScoped<IOrganizationRepository, OrganizationRepository>();
 builder.Services.AddScoped<IEmailService, EmailService>();
+builder.Services.AddScoped<ISmsService, SMSServicecs>();
 builder.Services.AddTransient<IEmailSender, NoOpEmailSender>();
+
 
 builder.Services.AddMediatR(cfg =>
     cfg.RegisterServicesFromAssembly(typeof(CreateUserCommandHandler).Assembly));
@@ -193,17 +195,14 @@ var app = builder.Build();
 app.ResponseHandling(app.Logger);
 
 
-if (app.Environment.IsDevelopment())
+app.MapOpenApi();
+app.MapScalarApiReference(options =>
 {
-    app.MapOpenApi();
-    app.MapScalarApiReference(options =>
-    {
-        options
-            .WithTitle("ManageUsers API")
-            .WithTheme(ScalarTheme.Default)
-            .WithDefaultHttpClient(ScalarTarget.CSharp, ScalarClient.HttpClient);
-    });
-}
+    options
+        .WithTitle("ManageUsers API")
+        .WithTheme(ScalarTheme.Default)
+        .WithDefaultHttpClient(ScalarTarget.CSharp, ScalarClient.HttpClient);
+});
 
 app.UseForwardedHeaders();
 
