@@ -1,4 +1,4 @@
-﻿using ManageUsers.Application;
+﻿using ManageUsers.Application.Common;
 using ManageUsers.Application.Interfaces;
 
 namespace ManageUsers.Infrastructure.Persistence
@@ -7,36 +7,35 @@ namespace ManageUsers.Infrastructure.Persistence
     {
         private readonly AppDbContext _context;
 
-        public UnitOfWork(AppDbContext context,
+        public UnitOfWork(
+            AppDbContext context,
             IUserRepository users,
             IRoleRepository roles,
             IUserRoleRepository userRoles,
             IRolePermissionRepository rolePermissions,
-            IOrganizationRepository organizations
-            )
-
+            IOrganizationRepository organizations)
         {
             _context = context;
             Users = users;
             Roles = roles;
             UserRoles = userRoles;
-            Organizations = organizations;
             RolePermissions = rolePermissions;
+            Organizations = organizations;
         }
 
-        public IUserRepository Users {get;}
+        public IUserRepository Users { get; }
 
-        public IRoleRepository Roles {get;}
+        public IRoleRepository Roles { get; }
 
-        public IUserRoleRepository UserRoles {get;}
+        public IUserRoleRepository UserRoles { get; }
 
-        public IRolePermissionRepository RolePermissions {get;}
+        public IRolePermissionRepository RolePermissions { get; }
 
-        public IOrganizationRepository Organizations {get;}
+        public IOrganizationRepository Organizations { get; }
 
-        public async Task SaveChangesAsync(CancellationToken ct = default)
+        public async Task SaveChangesAsync(CancellationToken cancellationToken = default)
         {
-           await _context.SaveChangesAsync(ct);
+            await _context.SaveChangesAsync(cancellationToken);
         }
     }
 }

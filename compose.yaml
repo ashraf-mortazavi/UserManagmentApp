@@ -1,20 +1,21 @@
-
 services:
   sqlserver:
     image: mcr.microsoft.com/mssql/server:2022-latest
     container_name: manageuser_sqlserver
     environment:
       - ACCEPT_EULA=Y
-      - SA_PASSWORD=am@700511
+      - SA_PASSWORD=${SA_PASSWORD:-am@700511}
     ports:
       - "1433:1433"
     volumes:
       - sql_data:/var/opt/mssql
     healthcheck:
-      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P am@700511 -Q 'SELECT 1' -C || exit 1"]
+      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P ${SA_PASSWORD:-am@700511} -Q 'SELECT 1' -C || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 20
+    networks:
+      - backend
 
   api:
     build:
@@ -25,10 +26,40 @@ services:
       sqlserver:
         condition: service_healthy
     environment:
-      - ASPNETCORE_ENVIRONMENT=Development
-      - ConnectionStrings__UserManagementConnection=Server=sqlserver,1433;Database=UserManagementDB;User Id=sa;Password=am@700511;TrustServerCertificate=True;Encrypt=False
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ConnectionStrings__UserManagementConnection=Server=sqlserver,1433;Database=UserManagementDB;User Id=sa;Password=${SA_PASSWORD:-am@700511};TrustServerCertificate=True;Encrypt=False
+      - Jwt__SecretKey=${JWT_SECRET_KEY:-95A3A07B-73B5-4105-8891-BA2FE2D159A5}
+      - Jwt__Issuer=${JWT_ISSUER:-UserManagementApp}
+      - Jwt__Audience=${JWT_AUDIENCE:-user.ir}
+      - AppSettings__FrontendUrl=${FRONTEND_URL:-https://yourdomain.com}
+      - Cors__AllowedOrigins__0=${FRONTEND_URL:-https://yourdomain.com}
     ports:
       - "8080:8080"
+    networks:
+      - backend
+      - frontend
+    restart: unless-stopped
+
+  nginx:
+    image: nginx:alpine
+    container_name: manageuser_nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/certs:/etc/nginx/certs:ro
+    depends_on:
+      - api
+    networks:
+      - frontend
+    restart: unless-stopped
 
 volumes:
   sql_data:
+
+networks:
+  backend:
+    driver: bridge
+  frontend:
+    driver: bridge

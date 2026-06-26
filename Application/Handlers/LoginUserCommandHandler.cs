@@ -14,8 +14,10 @@ namespace ManageUsers.Application.Handlers
         private readonly IUserService _userService;
         private readonly IUserRoleService _userRoleService;
         private readonly IRolePermissionService _rolePermissionService;
-
-        public LoginUserCommandHandler(IUserService userService, IUserRoleService userRoleService, IRolePermissionService rolePermissionService)
+        public LoginUserCommandHandler(
+            IUserService userService,
+            IUserRoleService userRoleService,
+            IRolePermissionService rolePermissionService)
         {
             _userService = userService;
             _userRoleService = userRoleService;
@@ -36,7 +38,7 @@ namespace ManageUsers.Application.Handlers
             }
             if (!user.Enabled)
             {
-                response.FailedResult = "کاربر غیر فعال است!";
+                response.FailedResult = "کاربر غیر فعال شده است!";
                 return response;
             }
 
@@ -44,7 +46,7 @@ namespace ManageUsers.Application.Handlers
 
             if (!checkPassword)
             {
-                response.FailedResult = "رمز ورود اشتباه است!";
+                response.FailedResult = "رمز عبور کاربر صیحیح نمی باشد!";
                 return response;
             }
             List<IdentityUserRole<string>> identityUserRoles = await _userRoleService.GetUserRole(user.Id, cancellationToken: cancellationToken);

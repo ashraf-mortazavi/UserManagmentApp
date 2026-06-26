@@ -5,9 +5,14 @@ using Microsoft.EntityFrameworkCore;
 
 namespace ManageUsers.Infrastructure.Repositories
 {
-    public class OrganizationRepository(AppDbContext appDbContext) : IOrganizationRepository
+    public class OrganizationRepository : IOrganizationRepository
     {
         private readonly AppDbContext _appDbContext;
+
+        public OrganizationRepository(AppDbContext appDbContext)
+        {
+            _appDbContext = appDbContext;
+        }
 
         public async Task<Organization> GetOrganizationAsync(int organizationId, CancellationToken cancellationToken = default)
         {

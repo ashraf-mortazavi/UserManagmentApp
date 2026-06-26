@@ -16,6 +16,10 @@ public sealed class User : IdentityUser<int>
     public bool Enabled { get; set; } = true;
     public string? CreatedById { get; set; }
 
+    public string? OTPCode { get; set; }
+
+    public DateTime? SendDateTimeOTPCode { get; set; }
+
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime? UpdatedAt { get; set; }
 

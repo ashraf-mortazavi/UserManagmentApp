@@ -1,5 +1,4 @@
-﻿
-using ManageUsers.Application.Interfaces;
+﻿using ManageUsers.Application.Interfaces;
 
 namespace ManageUsers.Application.Common;
 
@@ -9,6 +8,7 @@ public interface IUnitOfWork
     IRoleRepository Roles { get; }
     IUserRoleRepository UserRoles { get; }
     IRolePermissionRepository RolePermissions { get; }
+    IOrganizationRepository Organizations { get; }
 
-    Task SaveAsync(CancellationToken cancellationToken = default);
+    Task SaveChangesAsync(CancellationToken cancellationToken = default);
 }

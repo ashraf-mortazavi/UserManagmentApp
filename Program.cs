@@ -1,7 +1,9 @@
 using ManageUsers.APIs;
 using ManageUsers.APIs.Extentions;
-using ManageUsers.Application;
 using ManageUsers.Application.Commands;
+using ManageUsers.Application.Common;
+using ManageUsers.Application.DTOs;
+using ManageUsers.Application.RequestValidators;
 using ManageUsers.Application.Handlers;
 using ManageUsers.Application.Interfaces;
 using ManageUsers.Application.Services.Implementations;
@@ -13,17 +15,17 @@ using ManageUsers.Infrastructure.Persistence.DataSeeder;
 using ManageUsers.Infrastructure.Repositories;
 using ManageUsers.Infrastructure.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Scalar.AspNetCore;
 using System.Security.Claims;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
 builder.Services.AddDbContext<AppDbContext>(opt =>
     opt.UseSqlServer(
     builder.Configuration.GetConnectionString("UserManagementConnection"),
@@ -35,19 +37,6 @@ builder.Services.AddDbContext<AppDbContext>(opt =>
             maxRetryDelay: TimeSpan.FromSeconds(10),
             errorNumbersToAdd: null);
     }));
-
-bool enableSwagger = true;
-
-if (enableSwagger)
-{
-    //Add Swagger with a Document as a XML File
-    builder.Services.AddSwaggerGen(options =>
-    {
-        options.DocumentFilter<SwaggerAddEnumDescriptions>();
-        options.UseInlineDefinitionsForEnums();
-    });
-}
-
 
 builder.Services.AddIdentity<User, Role>(option =>
 {
@@ -63,8 +52,8 @@ builder.Services.ConfigureApplicationCookie(options =>
 {
     options.Cookie.HttpOnly = true;
     options.Cookie.SameSite = SameSiteMode.Lax;
-    options.LoginPath = null; // Disable redirect to login page
-    options.AccessDeniedPath = null; // Disable redirect to access denied page
+    options.LoginPath = null;
+    options.AccessDeniedPath = null;
     options.Events.OnRedirectToLogin = context =>
     {
         context.Response.StatusCode = 401;
@@ -88,12 +77,8 @@ builder.Services.AddScoped<IRoleRepository, RoleRepository>();
 builder.Services.AddScoped<IUserRoleRepository, UserRoleRepository>();
 builder.Services.AddScoped<IRolePermissionRepository, RolePermissionRepository>();
 builder.Services.AddScoped<IOrganizationRepository, OrganizationRepository>();
-
-
 builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddTransient<IEmailSender, NoOpEmailSender>();
-
-
 
 builder.Services.AddMediatR(cfg =>
     cfg.RegisterServicesFromAssembly(typeof(CreateUserCommandHandler).Assembly));
@@ -128,7 +113,7 @@ builder.Services.AddAuthentication(options =>
 
         options.RequireHttpsMetadata = false;
         options.SaveToken = true;
-     
+
         options.TokenValidationParameters = new TokenValidationParameters
         {
             ValidateIssuer = true,
@@ -145,26 +130,86 @@ builder.Services.AddAuthentication(options =>
         };
     });
 
+builder.Services.AddAuthorization();
 
 builder.Services.AddHttpContextAccessor();
 
 builder.Services.AddControllers();
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-builder.Services.AddOpenApi();
 builder.Services.AddEndpointsApiExplorer();
+
+builder.Services.AddOpenApi(options =>
+{
+    options.AddDocumentTransformer((document, _, _) =>
+    {
+        document.Info = new Microsoft.OpenApi.Models.OpenApiInfo
+        {
+            Title = "ManageUsers API",
+            Version = "v1",
+            Description = "User Management System API with 2FA support, role-based authorization, and OTP verification.",
+            Contact = new Microsoft.OpenApi.Models.OpenApiContact
+            {
+                Name = "API Support",
+                Email = "support@example.com"
+            }
+        };
+        return Task.CompletedTask;
+    });
+});
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowFrontend", policyBuilder =>
+    {
+        var frontendUrl = builder.Configuration["AppSettings:FrontendUrl"] ?? "https://localhost:3000";
+        var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>()
+            ?? [frontendUrl];
+
+        policyBuilder
+            .WithOrigins(allowedOrigins)
+            .AllowAnyHeader()
+            .AllowAnyMethod()
+            .AllowCredentials();
+    });
+
+    options.AddPolicy("AllowAll", policyBuilder =>
+    {
+        policyBuilder
+            .SetIsOriginAllowed(_ => true)
+            .AllowAnyHeader()
+            .AllowAnyMethod()
+            .AllowCredentials();
+    });
+});
+
+builder.Services.Configure<ForwardedHeadersOptions>(options =>
+{
+    options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+    options.KnownProxies.Clear();
+    options.KnownNetworks.Clear();
+});
 
 var app = builder.Build();
 
 app.ResponseHandling(app.Logger);
 
 
-// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
+    app.MapScalarApiReference(options =>
+    {
+        options
+            .WithTitle("ManageUsers API")
+            .WithTheme(ScalarTheme.Default)
+            .WithDefaultHttpClient(ScalarTarget.CSharp, ScalarClient.HttpClient);
+    });
 }
 
+app.UseForwardedHeaders();
+
 app.UseHttpsRedirection();
+
+app.UseCors("AllowFrontend");
 
 app.UseAuthentication();
 
@@ -180,3 +225,5 @@ using (var scope = app.Services.CreateScope())
 }
 
 app.Run();
+
+public partial class Program { }

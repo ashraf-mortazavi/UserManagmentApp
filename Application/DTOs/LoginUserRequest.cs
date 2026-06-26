@@ -7,15 +7,17 @@ namespace ManageUsers.Application.DTOs
         [Description("نام کاربری")]
         public string UserName { get; set; }
 
-        [Description("رمزعبور")]
+        [Description("رمز عبور")]
         public string Password { get; set; }
     }
 
     public class LoginUserResponse : BaseResponse
     {
-        [Description("توکن")]
-        public string Token { get; set; }
-        [Description("توکن مجدد")]
-        public string RefreshToken { get; set; }
+       
+        public string? Token { get; set; }
+        public string? RefreshToken { get; set; }
+        public string? UserId { get; set; }
+        public bool RequiresOtp { get; set; }
+
     }
 }

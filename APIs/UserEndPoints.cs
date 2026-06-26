@@ -1,14 +1,11 @@
-using ManageUsers.Application.Commands;
+﻿using ManageUsers.Application.Commands;
 using ManageUsers.Application.DTOs;
 using ManageUsers.Application.Queries;
-using ManageUsers.Domain;
+using ManageUsers.Extentions;
 using MediatR;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using System.Net;
-using System.Reflection;
 using System.Security.Claims;
 
 namespace ManageUsers.Controllers
@@ -17,62 +14,55 @@ namespace ManageUsers.Controllers
     {
         public static void MapUserEndpoints(this IEndpointRouteBuilder app)
         {
-
             var group = app.MapGroup("/api/users")
                 .WithTags("Users")
                 .WithOpenApi();
-
-            group.MapGet("/me", (ClaimsPrincipal user) =>
-            {
-                var claims = user.Claims.Select(c => new { c.Type, c.Value });
-                return Results.Ok(claims);
-            }).RequireAuthorization();
 
             group.MapPost("/createuser", CreateUser)
                 .RequireAuthorization(policy => policy.RequireRole("SuperAdmin"))
                 .WithName("CreateUser")
                 .WithSummary("Create a new user")
-                .Produces<CreateUserResponse>(StatusCodes.Status200OK)
-                .Produces<ProblemDetails>(StatusCodes.Status400BadRequest);
+                .Validator<CreateUserRequest>();
+
 
             group.MapPost("/login", Login)
-               .WithName("Login")
-               .WithSummary("Login a new user")
-               .Produces<LoginUserResponse>(StatusCodes.Status200OK)
-               .Produces<ProblemDetails>(StatusCodes.Status400BadRequest);
+               .WithDisplayName("ورود")
+               .WithSummary("Login with username/password")
+               .Validator<LoginUserRequest>();
+
+
+            group.MapPost("/request-otp", RequestOTPCode)
+                 .AllowAnonymous()
+                 .WithDisplayName("درخواست کد")
+                .WithSummary("Verify OTP code to complete 2FA login and receive JWT token")
+                .Validator<RequestOTPCode>();
+
 
             group.MapPut("/changepassword", ChangePassword)
-                 .WithName("ChangePassword")
-                .WithSummary("Change user password")
-                .Produces<LoginUserResponse>(StatusCodes.Status200OK)
-                .Produces<ProblemDetails>(StatusCodes.Status400BadRequest);
-
+                 .RequireAuthorization()
+                 .WithDisplayName("تغییر رمز عبور")
+                 .WithSummary("Change user password")
+                 .Validator<ChangeUserPasswordRequest>();
 
             group.MapPut("/forgotpassword", ForgotPassword)
-                .WithName("ForgotPassword")
-               .WithSummary("Forgot user password")
-               .Produces<LoginUserResponse>(StatusCodes.Status200OK)
-               .Produces<ProblemDetails>(StatusCodes.Status400BadRequest);
-
+                .WithDisplayName("فراموشی رمز عبور")
+                .WithSummary("Request a password reset email")
+                .Validator<ForgotPasswordRequest>();
 
             group.MapPut("/resetpassword", ResetPassword)
-               .WithName("ResetPassword")
+                .WithDisplayName("تغییر کامل رمز عبور")
               .WithSummary("Reset user password")
-              .Produces<LoginUserResponse>(StatusCodes.Status200OK)
-              .Produces<ProblemDetails>(StatusCodes.Status400BadRequest);
+              .Validator<ResetPasswordRequest>();
 
             group.MapGet("/{roleId:int}/permissions", GetRolePermissions)
-                .WithName("GetRolePermissions")
-                .WithSummary("Get role Permissions")
-                .Produces<GetRolePermissionsResponse>(StatusCodes.Status200OK)
-                .Produces<ProblemDetails>(StatusCodes.Status400BadRequest);
-
+                .RequireAuthorization()
+                .WithDisplayName("دریافت دسترسی های نقش مشخص")
+                .WithSummary("Get permissions for a specific role");
 
             group.MapGet("/roles", GetRoles)
-                .WithName("GetRoles")
-                .WithSummary("Get roles")
-                .Produces<RoleDto>(StatusCodes.Status200OK)
-                .Produces<ProblemDetails>(StatusCodes.Status400BadRequest);
+                .RequireAuthorization()
+                .WithDisplayName("دریافت نقش ها")
+                .WithSummary("Get roles for current user");
         }
 
         public static async Task<Results<Ok<APIResponse<CreateUserResponse>>, BadRequest<APIResponse<CreateUserResponse>>>> CreateUser(
@@ -86,7 +76,7 @@ namespace ManageUsers.Controllers
             try
             {
                 var userId = claimsPrincipal.FindFirst("nameid")?.Value
-                ?? claimsPrincipal.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                    ?? claimsPrincipal.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
                 var command = new CreateUserCommand(
                    FirstName: request.FirstName,
@@ -128,7 +118,6 @@ namespace ManageUsers.Controllers
 
         }
 
-
         private static async Task<Results<Ok<APIResponse<LoginUserResponse>>, BadRequest<APIResponse<LoginUserResponse>>>> Login(
             [FromBody] LoginUserRequest loginUserDTO,
             ISender sender,
@@ -148,11 +137,44 @@ namespace ManageUsers.Controllers
                     response.Result.Data = loginUserResponse;
                     return TypedResults.BadRequest(response);
                 }
+
                 response.StatusCode = HttpStatusCode.OK;
+                response.Result.Data = loginUserResponse;
                 return TypedResults.Ok(response);
-
-
             }
+
+            catch
+            {
+                throw;
+            }
+        }
+
+        private static async Task<Results<Ok<APIResponse<RequestOTPCodeResponse>>, BadRequest<APIResponse<RequestOTPCodeResponse>>>> RequestOTPCode(
+            [FromBody] RequestOTPCode request,
+            ISender sender)
+        {
+            APIResponse<RequestOTPCodeResponse> response = new();
+
+            try
+            {
+
+                var command = new RequestOtpCodeCommand(request.PhoneNumber);
+                RequestOTPCodeResponse verifyOtpResponse = await sender.Send(command);
+
+                if (!string.IsNullOrEmpty(verifyOtpResponse.FailedResult))
+                {
+                    response.ErrorMessage = [verifyOtpResponse.FailedResult];
+                    response.IsSuccess = false;
+                    response.StatusCode = HttpStatusCode.BadRequest;
+                    response.Result.Data = verifyOtpResponse;
+                    return TypedResults.BadRequest(response);
+                }
+
+                response.StatusCode = HttpStatusCode.OK;
+                response.Result.Data = verifyOtpResponse;
+                return TypedResults.Ok(response);
+            }
+
             catch
             {
                 throw;
@@ -193,7 +215,6 @@ namespace ManageUsers.Controllers
                 throw;
             }
         }
-
 
         private static async Task<Results<Ok<APIResponse<ForgotPasswordResponse>>, BadRequest<APIResponse<ForgotPasswordResponse>>>> ForgotPassword(
             [FromBody] ForgotPasswordRequest forgotPasswordRequest,
@@ -260,7 +281,6 @@ namespace ManageUsers.Controllers
             }
         }
 
-
         private static async Task<Results<Ok<APIResponse<List<GetRolePermissionsResponse>>>, NotFound<APIResponse<List<GetRolePermissionsResponse>>>>> GetRolePermissions(
             [FromQuery] string[] roleIds,
             ISender sender,
@@ -276,7 +296,7 @@ namespace ManageUsers.Controllers
 
                 response.StatusCode = HttpStatusCode.OK;
                 response.Result.Data = rolePermisionsResponse;
-                response.Result.pagination.TotalRecords = rolePermisionsResponse.Count() == 0 ? 0 : rolePermisionsResponse.First().TotalRecords;
+                response.Result.pagination.TotalRecords = rolePermisionsResponse.Count == 0 ? 0 : rolePermisionsResponse.First().TotalRecords;
                 response.Result.pagination.PageNumber = pageNumber;
                 response.Result.pagination.PageSize = pageSize;
                 return TypedResults.Ok(response);
@@ -304,7 +324,7 @@ namespace ManageUsers.Controllers
 
                 response.StatusCode = HttpStatusCode.OK;
                 response.Result.Data.Items = rolesResponse.Items;
-                response.Result.pagination.TotalRecords = rolesResponse.Items.Count() == 0 ? 0 : rolesResponse.Items.First().TotalRecords;
+                response.Result.pagination.TotalRecords = rolesResponse.Items.Count == 0 ? 0 : rolesResponse.Items.First().TotalRecords;
                 response.Result.pagination.PageNumber = pageNumber;
                 response.Result.pagination.PageSize = pageSize;
                 return TypedResults.Ok(response);

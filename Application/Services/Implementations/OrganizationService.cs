@@ -1,4 +1,5 @@
-﻿using ManageUsers.Application.Services.Interfaces;
+﻿using ManageUsers.Application.Common;
+using ManageUsers.Application.Services.Interfaces;
 using ManageUsers.Domain;
 using Microsoft.EntityFrameworkCore;
 

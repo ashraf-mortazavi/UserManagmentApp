@@ -13,12 +13,16 @@ namespace ManageUsers.Application.Handlers
         private readonly IEmailService _emailService;
         private readonly IConfiguration _configuration;
 
-        public ForgotPasswordUserCommandHandler(UserManager<User> userManager,
+        public ForgotPasswordUserCommandHandler(
+            UserManager<User> userManager,
             IEmailService emailService,
             IConfiguration configuration)
         {
-
+            _userManager = userManager;
+            _emailService = emailService;
+            _configuration = configuration;
         }
+
         public async Task<ForgotPasswordResponse> Handle(ForgotPasswordUserCommand request, CancellationToken cancellationToken)
         {
             ForgotPasswordResponse response = new();
@@ -54,7 +58,6 @@ namespace ManageUsers.Application.Handlers
                     response.FailedResult = "ارسال ایمیل با مشکل مواجه شد. لطفاً بعداً تلاش کنید.";
                     return response;
                 }
-
             }
             catch (Exception)
             {

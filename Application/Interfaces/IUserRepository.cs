@@ -8,5 +8,7 @@ namespace ManageUsers.Application.Interfaces
     {
         Task<User> GetUserByIdAsync(string userId, CancellationToken ct = default);
         Task<User?> GetByUserNameAsync(string userName, CancellationToken cancellationToken = default);
+        Task<User?> GetByPhoneNumberAsync(string phoneNumber, CancellationToken cancellationToken = default);
+        void Update(User user);
     }
 }

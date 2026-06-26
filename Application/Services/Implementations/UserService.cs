@@ -1,54 +1,55 @@
 ﻿using ManageUsers.Application.Common;
+using ManageUsers.Application.Common.Utilities;
 using ManageUsers.Application.DTOs;
 using ManageUsers.Application.Services.Interfaces;
 using ManageUsers.Domain;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
-using System.Threading;
 
 namespace ManageUsers.Application.Services.Implementations;
 
-public class UserService(IUnitOfWork unitOfWork, UserManager<User> userManager) : IUserService
+public class UserService(
+    IUnitOfWork unitOfWork,
+    UserManager<User> userManager,
+    SignInManager<User> signInManager,
+    IOptions<JWTSetting> jwtSettings) : IUserService
 {
     private readonly IUnitOfWork _unitOfWork = unitOfWork;
-    private readonly UserManager<User> _usermanager = userManager;
-    private readonly JWTSetting _jwtSettings;
-    private readonly SignInManager<User> _signInManager;
+    private readonly UserManager<User> _userManager = userManager;
+    private readonly SignInManager<User> _signInManager = signInManager;
+    private readonly JWTSetting _jwtSettings = jwtSettings.Value;
+
+    private const int MinimumRangeOTP = 0;
+    private const int MaximumRangeOTP = 100000;
 
     public async Task<User> AssignUserRolesAsync(User user, string password, List<string> roles, CancellationToken cancellationToken = default)
     {
-        try
+        var createResult = await _userManager.CreateAsync(user, password);
+
+        if (!createResult.Succeeded)
         {
-            var createResult = await _usermanager.CreateAsync(user, password);
+            if (createResult.Errors.Any(e => e.Code == "DuplicateUserName"))
+                throw new InvalidOperationException("A user with that name already exists.");
 
-            if (!createResult.Succeeded)
-            {
-                if (createResult.Errors.Any(e => e.Code == "DuplicateUserName"))
-                    throw new InvalidOperationException("A user with that name already exists.");
-
-                throw new Exception($"User creation failed: {string.Join(", ", createResult.Errors)}");
-            }
-
-            var addRoleResult = await _usermanager.AddToRolesAsync(user, roles);
-            if (!addRoleResult.Succeeded)
-                throw new Exception("Failed to assign roles.");
+            throw new Exception($"User creation failed: {string.Join(", ", createResult.Errors)}");
         }
-        catch (Exception ex)
-        {
-            throw;
-        }
+
+        var addRoleResult = await _userManager.AddToRolesAsync(user, roles);
+        if (!addRoleResult.Succeeded)
+            throw new Exception("Failed to assign roles.");
 
         return user;
     }
 
     public async Task<bool> CheckPasswordAsync(User user, string password)
     {
-        return await _usermanager.CheckPasswordAsync(user: user, password: password);
+        return await _userManager.CheckPasswordAsync(user: user, password: password);
     }
 
     public async Task<JWEToken> CreateTokenAsync(CreateTokenContext context, CancellationToken cancellationToken = default)
@@ -57,21 +58,17 @@ public class UserService(IUnitOfWork unitOfWork, UserManager<User> userManager) 
         double expirationHours = _jwtSettings.TokenExpirationInHours;
         int refreshDays = _jwtSettings.RefreshTokenExpirationInDays;
 
-        // 1. Claims
         var claims = await GetClaimsAsync(
             context.User,
             context.ActiveRole,
             context.RolePermissions,
             cancellationToken);
 
-        // 2. Signing key
         var signingKey = new SymmetricSecurityKey(
             Encoding.UTF8.GetBytes(_jwtSettings.SecretKey));
         var signingCredentials = new SigningCredentials(
             signingKey, SecurityAlgorithms.HmacSha256);
 
-
-        // 4. Token descriptor – no NotBefore unless you have a real use‑case
         var descriptor = new SecurityTokenDescriptor
         {
             Issuer = _jwtSettings.Issuer,
@@ -82,11 +79,9 @@ public class UserService(IUnitOfWork unitOfWork, UserManager<User> userManager) 
             IssuedAt = now
         };
 
-        // 5. Generate encrypted access token
         JwtSecurityTokenHandler handler = new JwtSecurityTokenHandler();
         string accessToken = handler.CreateEncodedJwt(descriptor);
 
-        // 6. Refresh token
         byte[] randomBytes = new byte[16];
         RandomNumberGenerator.Fill(randomBytes);
         Guid refreshToken = new(randomBytes);
@@ -94,12 +89,14 @@ public class UserService(IUnitOfWork unitOfWork, UserManager<User> userManager) 
         var userToken = new ApplicationUserToken
         {
             TokenExpirationDate = now.AddHours(expirationHours),
-            HashToken = SecurityHelper.GetSha256Hash(accessToken),  // optional, keep if you need revocation
+            HashToken = SecurityHelper.GetSha256Hash(accessToken),
             UserId = context.User.Id,
             RefreshToken = SecurityHelper.GetSha256Hash(refreshToken.ToString()),
             RefreshTokenExpirationDate = now.AddDays(refreshDays),
             CreatedAt = now
         };
+
+        await _unitOfWork.SaveChangesAsync();
 
         return new JWEToken
         {
@@ -118,20 +115,44 @@ public class UserService(IUnitOfWork unitOfWork, UserManager<User> userManager) 
         return await _unitOfWork.Users.GetUserByIdAsync(userId, ct: ct);
     }
 
+    public async Task<User?> GetUserByPhoneNumber(string phoneNumber, CancellationToken ct = default)
+    {
+        return await _unitOfWork.Users.GetByPhoneNumberAsync(phoneNumber, cancellationToken: ct);
+    }
+
     public async Task<IdentityResult> SetPasswordByUserIdAsync(string userId, string newPassword)
     {
-        User? user = await _usermanager.FindByIdAsync(userId);
+        User? user = await _userManager.FindByIdAsync(userId);
         if (user == null)
             return IdentityResult.Failed(new IdentityError { Description = "User not found" });
 
-        if (await _usermanager.HasPasswordAsync(user))
+        if (await _userManager.HasPasswordAsync(user))
         {
-            var remove = await _usermanager.RemovePasswordAsync(user);
+            var remove = await _userManager.RemovePasswordAsync(user);
             if (!remove.Succeeded)
                 return remove;
         }
 
-        return await _usermanager.AddPasswordAsync(user, newPassword);
+        return await _userManager.AddPasswordAsync(user, newPassword);
+    }
+
+    public async Task<string> GenerateOtpAsync(string phoneNumber, CancellationToken cancellationToken = default)
+    {
+        DateTime now = DateTime.Now;
+        User user = await _unitOfWork.Users.GetByPhoneNumberAsync(phoneNumber, cancellationToken: cancellationToken);
+        if (user is not null)
+        {
+            user.OTPCode = GenerateSecureCode();
+            user.SendDateTimeOTPCode = now;
+        }
+        _unitOfWork.Users.Update(user);
+        await _unitOfWork.SaveChangesAsync(cancellationToken: cancellationToken);
+        return user.OTPCode;
+    }
+
+    public Task<bool> ValidateOtpAsync(string phoneNumber, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
     }
 
     private async Task<IEnumerable<Claim>> GetClaimsAsync(User user, bool activeRule,
@@ -147,6 +168,10 @@ public class UserService(IUnitOfWork unitOfWork, UserManager<User> userManager) 
             };
 
         return claims;
+    }
 
+    private static string GenerateSecureCode()
+    {
+        return new Random().Next(MinimumRangeOTP, MaximumRangeOTP).ToString("D5");
     }
 }
