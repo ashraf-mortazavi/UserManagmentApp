@@ -89,84 +89,6 @@ Authenticates user credentials and initiates 2FA by sending an OTP to the user's
   "detail": "This account has been disabled."
 }
 ```
-
----
-
-### 2. Verify OTP (Step 2 of 2FA)
-
-**`POST /api/users/verify-otp`**
-
-Completes the 2FA flow by verifying the OTP code and returning a JWT token.
-
-**Request:**
-```json
-{
-  "userId": "1",
-  "code": "123456"
-}
-```
-
-**Success Response (200 OK):**
-```json
-{
-  "statusCode": 200,
-  "isSuccess": true,
-  "result": {
-    "data": {
-      "token": "eyJhbGciOiJIUzI1NiIs...",
-      "refreshToken": "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
-    }
-  }
-}
-```
-
-**Error Responses:**
-```json
-// 400 Bad Request - Invalid OTP
-{
-  "type": "https://httpstatuses.com/400",
-  "title": "Invalid OTP",
-  "status": 400,
-  "detail": "The OTP code is invalid."
-}
-
-// 400 Bad Request - Expired OTP
-{
-  "type": "https://httpstatuses.com/400",
-  "title": "OTP Expired",
-  "status": 400,
-  "detail": "OTP token has expired. Please request a new one."
-}
-```
-
----
-
-### 3. Resend OTP
-
-**`POST /api/users/resend-otp`**
-
-Resends a new OTP code to the user's email address.
-
-**Request:**
-```json
-{
-  "userId": "1"
-}
-```
-
-**Success Response (200 OK):**
-```json
-{
-  "statusCode": 200,
-  "isSuccess": true,
-  "result": {
-    "data": {
-      "maskedEmail": "a*****f@example.com"
-    }
-  }
-}
-```
-
 ---
 
 ### 4. Create User (SuperAdmin Only)
@@ -303,7 +225,7 @@ Sends a password reset link to the user's email.
 
 ### 7. Reset Password
 
-**`PUT /api/users/resetpassword?token={encoded_token}`**
+**`PUT /api/users/resetpassword`**
 
 Resets the user's password using the token from the email.
 
@@ -331,26 +253,6 @@ Resets the user's password using the token from the email.
   }
 }
 ```
-
----
-
-### 8. Get Current User Claims
-
-**`GET /api/users/me`** 🔒 *Requires authentication*
-
-Returns all claims from the current JWT token.
-
-**Success Response (200 OK):**
-```json
-[
-  { "type": "nameid", "value": "1" },
-  { "type": "unique_name", "value": "Ashraf" },
-  { "type": "role", "value": "SuperAdmin" },
-  { "type": "phone_number", "value": "09157732147" }
-]
-```
-
----
 
 ### 9. Get User Roles
 
@@ -414,27 +316,31 @@ Returns permissions for a specific role.
   }
 }
 ```
+### 11. Post OTP Code
+**`PUT /api/users/request-otp`**
 
----
-
-## Error Handling (Problem Details)
-
-All errors follow [RFC 9457 (Problem Details)](https://www.rfc-editor.org/rfc/rfc9457) format:
-
+**Request:**
 ```json
 {
-  "type": "https://httpstatuses.com/{statusCode}",
-  "title": "{ErrorType}",
-  "status": {statusCode},
-  "detail": "{Human-readable error message}",
-  "instance": "{Request path}",
-  "extensions": {
-    "traceId": "{correlation-id}",
-    "timestamp": "2026-06-26T12:00:00Z"
+  "phonenumber": "09235874163"
+}
+
+
+**Success Response (200 OK):**
+```json
+{
+  "statusCode": 200,
+  "isSuccess": true,
+  "result": {
+    "data": {
+      "success": true,
+      "message": "رمز عبور با موفقیت تغییر یافت.",
+      "otpcode": "eyJhbGciOiJIUzI1NiIs...",
+      "OTPCodeValidTimeInMinute": "new-refresh-token"
+    }
   }
 }
 ```
-
 ### HTTP Status Code Mapping
 
 | Scenario | Status Code | Title |
@@ -485,43 +391,3 @@ All errors follow [RFC 9457 (Problem Details)](https://www.rfc-editor.org/rfc/rf
 | `menu.view.operator` | View operator entries |
 
 ---
-
-## Running with Docker
-
-```bash
-# Start all services
-docker compose up -d
-
-# Access API
-curl http://localhost:8080/api/users/login
-
-# Access Scalar docs
-open http://localhost:8080/scalar/v1
-```
-
-## Environment Variables
-
-| Variable | Description | Default |
-|---|---|---|
-| `ConnectionStrings__UserManagementConnection` | SQL Server connection string | See appsettings |
-| `Jwt__SecretKey` | JWT signing key (min 16 chars) | See appsettings |
-| `Jwt__Issuer` | JWT issuer | `UserManagementApp` |
-| `Jwt__Audience` | JWT audience | `user.ir` |
-| `AppSettings__FrontendUrl` | Frontend URL for CORS | `http://localhost:3000` |
-| `Cors__AllowedOrigins__*` | Allowed CORS origins | `http://localhost:3000` |
-
----
-
-## Running Tests
-
-```bash
-dotnet test ManageUsers.Tests/ManageUsers.Tests.csproj
-```
-
-**Test Coverage (49 tests):**
-- `ExceptionHandling/GlobalExceptionHandlerTests.cs` - 13 tests
-- `ExceptionHandling/DomainExceptionTests.cs` - 8 tests
-- `Handlers/LoginUserCommandHandlerTests.cs` - 6 tests
-- `Handlers/VerifyOtpCommandHandlerTests.cs` - 4 tests
-- `Services/OtpServiceTests.cs` - 10 tests
-- `Services/SecurityHelperTests.cs` - 5 tests
