@@ -317,7 +317,7 @@ Returns permissions for a specific role.
 }
 ```
 ### 11. Post OTP Code
-**`PUT /api/users/request-otp`**
+**`POST /api/users/request-otp`**
 
 **Request:**
 ```json
