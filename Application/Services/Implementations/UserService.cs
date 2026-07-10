@@ -174,4 +174,24 @@ public class UserService(
     {
         return new Random().Next(MinimumRangeOTP, MaximumRangeOTP).ToString("D5");
     }
+
+    public Task<bool> IsLockedOutAsync(User user)
+    {
+       return _userManager.IsLockedOutAsync(user);
+    }
+
+    public Task RegisterFailedAttemptAsync(User user)
+    {
+       return _userManager.AccessFailedAsync(user);
+    }
+
+    public Task ResetFailedAttemptsAsync(User user)
+    {
+       return _userManager.ResetAccessFailedCountAsync(user);
+    }
+
+    public Task<int> GetAccessFailedCountAsync(User user)
+    {
+        return _userManager.GetAccessFailedCountAsync(user);
+    }
 }

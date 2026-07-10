@@ -20,6 +20,9 @@ public sealed class User : IdentityUser<int>
 
     public DateTime? SendDateTimeOTPCode { get; set; }
 
+    public bool IsFirstLogin { get; set; } = true;
+    public DateTime? PasswordExpiresAt { get; set; }
+
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime? UpdatedAt { get; set; }
 

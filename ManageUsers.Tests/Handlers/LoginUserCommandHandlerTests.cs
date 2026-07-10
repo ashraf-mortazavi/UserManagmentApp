@@ -15,6 +15,7 @@ public class LoginUserCommandHandlerTests
 {
     private readonly IUserService _userService;
     private readonly IUserRoleService _userRoleService;
+    private readonly ICaptchaService _captchService;
     private readonly IRolePermissionService _rolePermissionService;
     private readonly LoginUserCommandHandler _handler;
 
@@ -23,7 +24,8 @@ public class LoginUserCommandHandlerTests
         _userService = Substitute.For<IUserService>();
         _userRoleService = Substitute.For<IUserRoleService>();
         _rolePermissionService = Substitute.For<IRolePermissionService>();
-        _handler = new LoginUserCommandHandler(_userService, _userRoleService, _rolePermissionService);
+        _captchService = Substitute.For<ICaptchaService>();
+        _handler = new LoginUserCommandHandler(_userService, _userRoleService, _rolePermissionService, _captchService);
     }
 
     private User CreateTestUser(int id = 1, bool enabled = true)

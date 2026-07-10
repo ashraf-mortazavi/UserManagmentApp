@@ -388,6 +388,9 @@ namespace ManageUsers.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<bool>("IsFirstLogin")
+                        .HasColumnType("bit");
+
                     b.Property<string>("LastName")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -416,6 +419,9 @@ namespace ManageUsers.Migrations
 
                     b.Property<int?>("OrganizationId")
                         .HasColumnType("int");
+
+                    b.Property<DateTime?>("PasswordExpiresAt")
+                        .HasColumnType("datetime2");
 
                     b.Property<string>("PasswordHash")
                         .HasColumnType("nvarchar(max)");

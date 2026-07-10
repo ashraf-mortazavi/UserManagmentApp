@@ -1,11 +1,13 @@
+using FluentValidation;
 using ManageUsers.APIs;
 using ManageUsers.APIs.Extentions;
+using ManageUsers.Application;
 using ManageUsers.Application.Commands;
 using ManageUsers.Application.Common;
 using ManageUsers.Application.DTOs;
-using ManageUsers.Application.RequestValidators;
 using ManageUsers.Application.Handlers;
 using ManageUsers.Application.Interfaces;
+using ManageUsers.Application.RequestValidators;
 using ManageUsers.Application.Services.Implementations;
 using ManageUsers.Application.Services.Interfaces;
 using ManageUsers.Controllers;
@@ -66,12 +68,15 @@ builder.Services.ConfigureApplicationCookie(options =>
     };
 });
 
+builder.Services.AddValidatorsFromAssemblyContaining<LoginUserRequestValidator>();
+builder.Services.AddDistributedMemoryCache();
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IUserRoleService, UserRoleService>();
 builder.Services.AddScoped<IRoleService, RoleService>();
 builder.Services.AddScoped<IRolePermissionService, RolePermissionService>();
 builder.Services.AddScoped<IOrganizationService, OrganizationService>();
+builder.Services.AddScoped<ICaptchaService, CaptchaService>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IRoleRepository, RoleRepository>();
 builder.Services.AddScoped<IUserRoleRepository, UserRoleRepository>();
@@ -143,7 +148,7 @@ builder.Services.AddOpenApi(options =>
 {
     options.AddDocumentTransformer((document, _, _) =>
     {
-        document.Info = new Microsoft.OpenApi.Models.OpenApiInfo
+        document.Info = new ()
         {
             Title = "ManageUsers API",
             Version = "v1",
@@ -156,43 +161,23 @@ builder.Services.AddOpenApi(options =>
         };
         return Task.CompletedTask;
     });
+
+    options.AddDocumentTransformer<BearerSecuritySchemeTransformer>();
 });
 
+const string CorsPolicy = "FrontendPolicy";
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowFrontend", policyBuilder =>
+    options.AddPolicy(CorsPolicy, policy =>
     {
-        var frontendUrl = builder.Configuration["AppSettings:FrontendUrl"] ?? "https://localhost:3000";
-        var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>()
-            ?? [frontendUrl];
-
-        policyBuilder
-            .WithOrigins(allowedOrigins)
-            .AllowAnyHeader()
-            .AllowAnyMethod()
-            .AllowCredentials();
-    });
-
-    options.AddPolicy("AllowAll", policyBuilder =>
-    {
-        policyBuilder
-            .SetIsOriginAllowed(_ => true)
-            .AllowAnyHeader()
-            .AllowAnyMethod()
-            .AllowCredentials();
+        policy.WithOrigins("http://localhost:3000") // or 5173 for Vite — match exactly what your browser shows
+              .AllowAnyHeader()
+              .AllowAnyMethod();
     });
 });
 
-builder.Services.Configure<ForwardedHeadersOptions>(options =>
-{
-    options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
-    options.KnownProxies.Clear();
-    options.KnownNetworks.Clear();
-});
 
 var app = builder.Build();
-
-app.ResponseHandling(app.Logger);
 
 
 app.MapOpenApi();
@@ -208,7 +193,7 @@ app.UseForwardedHeaders();
 
 app.UseHttpsRedirection();
 
-app.UseCors("AllowFrontend");
+app.UseCors(CorsPolicy);
 
 app.UseAuthentication();
 

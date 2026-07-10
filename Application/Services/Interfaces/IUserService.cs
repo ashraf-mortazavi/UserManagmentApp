@@ -19,6 +19,9 @@ namespace ManageUsers.Application.Services.Interfaces
 
         Task<string> GenerateOtpAsync(string phoneNumber, CancellationToken cancellationToken = default);
         Task<bool> ValidateOtpAsync(string phoneNumber, CancellationToken cancellationToken = default);
-
+        Task<bool> IsLockedOutAsync(User user);
+        Task RegisterFailedAttemptAsync(User user);
+        Task ResetFailedAttemptsAsync(User user);
+        Task<int> GetAccessFailedCountAsync(User user);
     }
 }
