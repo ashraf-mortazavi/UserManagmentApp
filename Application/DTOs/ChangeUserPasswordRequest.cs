@@ -3,9 +3,9 @@
 namespace ManageUsers.Application.DTOs
 {
     public record ChangeUserPasswordRequest(
-      string CurrentPassword,
-      string NewPassword,
-      string ConfirmNewPassword
+      [Description]string CurrentPassword,
+      [Description] string NewPassword,
+      [Description] string ConfirmNewPassword
   );
 
 

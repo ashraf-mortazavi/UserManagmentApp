@@ -19,7 +19,7 @@ namespace ManageUsers.Controllers
                 .WithOpenApi();
 
             group.MapPost("/createuser", CreateUser)
-                .RequireAuthorization(policy => policy.RequireRole("SuperAdmin"))
+                .AllowAnonymous()
                 .WithName("CreateUser")
                 .WithSummary("Create a new user")
                 .Validator<CreateUserRequest>();
@@ -63,6 +63,12 @@ namespace ManageUsers.Controllers
                 .RequireAuthorization()
                 .WithDisplayName("دریافت نقش ها")
                 .WithSummary("Get roles for current user");
+
+            group.MapGet("/captcha", GenerateCaptchCode)
+               .AllowAnonymous()
+               .WithDisplayName("دریافت کد امنیتی")
+               .WithSummary("Generate Captch Code");
+
         }
 
         public static async Task<Results<Ok<APIResponse<CreateUserResponse>>, BadRequest<APIResponse<CreateUserResponse>>>> CreateUser(
@@ -281,14 +287,14 @@ namespace ManageUsers.Controllers
             }
         }
 
-        private static async Task<Results<Ok<APIResponse<List<GetRolePermissionsResponse>>>, NotFound<APIResponse<List<GetRolePermissionsResponse>>>>> GetRolePermissions(
+        private static async Task<Results<Ok<APIResponseList<List<GetRolePermissionsResponse>>>, NotFound<APIResponseList<List<GetRolePermissionsResponse>>>>> GetRolePermissions(
             [FromQuery] string[] roleIds,
             ISender sender,
             CancellationToken ct,
              int pageNumber = 1,
              int pageSize = 10)
         {
-            APIResponse<List<GetRolePermissionsResponse>> response = new();
+            APIResponseList<List<GetRolePermissionsResponse>> response = new();
             try
             {
                 GetRolePermissionsQuery getRolePermissionsQuery = new(roleIds: roleIds.ToList());
@@ -307,14 +313,14 @@ namespace ManageUsers.Controllers
             }
         }
 
-        private static async Task<Results<Ok<APIResponse<GetRolesResponse>>, NotFound<APIResponse<List<GetRolesResponse>>>>> GetRoles(
+        private static async Task<Results<Ok<APIResponseList<GetRolesResponse>>, NotFound<APIResponseList<List<GetRolesResponse>>>>> GetRoles(
           ISender sender,
           ClaimsPrincipal claimsPrincipal,
           CancellationToken ct,
           int pageNumber = 1,
           int pageSize = 10)
         {
-            APIResponse<GetRolesResponse> response = new();
+            APIResponseList<GetRolesResponse> response = new();
             try
             {
                 string userId = claimsPrincipal.FindFirst("nameid")?.Value!
@@ -329,6 +335,26 @@ namespace ManageUsers.Controllers
                 response.Result.pagination.PageSize = pageSize;
                 return TypedResults.Ok(response);
 
+            }
+            catch
+            {
+                throw;
+            }
+        }
+
+        private static async Task<Results<Ok<APIResponse<(string,string)>>, NotFound<APIResponse<(string,string)>>>> GenerateCaptchCode(
+           ISender sender,
+           ClaimsPrincipal claimsPrincipal,
+           CancellationToken ct)
+        {
+            APIResponse<(string, string)> response = new();
+            try
+            {
+               (string,string) result = await sender.Send(new GetCaptchaQuery(), ct);
+
+                response.StatusCode = System.Net.HttpStatusCode.OK;
+                response.Result.Data = result ;
+                return TypedResults.Ok(response);
             }
             catch
             {
