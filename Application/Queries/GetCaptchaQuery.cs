@@ -1,6 +1,7 @@
-﻿using MediatR;
+﻿using ManageUsers.Application.DTOs;
+using MediatR;
 
 namespace ManageUsers.Application.Queries
 {
-    public sealed record GetCaptchaQuery : IRequest<(string, string)>;
+    public sealed record GetCaptchaQuery : IRequest<GetCaptchaResponse>;
 }

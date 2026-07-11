@@ -68,8 +68,14 @@ builder.Services.ConfigureApplicationCookie(options =>
     };
 });
 
+builder.Services.AddStackExchangeRedisCache(options =>
+{
+    options.Configuration = builder.Configuration.GetConnectionString("Redis");
+    options.InstanceName = "ManageUsers_";
+});
+
+
 builder.Services.AddValidatorsFromAssemblyContaining<LoginUserRequestValidator>();
-builder.Services.AddDistributedMemoryCache();
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IUserRoleService, UserRoleService>();

@@ -1,4 +1,5 @@
-﻿using ManageUsers.Application.Services.Interfaces;
+﻿using ManageUsers.Application.DTOs;
+using ManageUsers.Application.Services.Interfaces;
 using Microsoft.Extensions.Caching.Distributed;
 using SkiaSharp;
 using System.Security.Cryptography;
@@ -18,7 +19,7 @@ namespace ManageUsers.Application.Services.Implementations
         public CaptchaService(IDistributedCache cache) => _cache = cache;
 
 
-        public async Task<(string CaptchaId, string ImageBase64)> GenerateCaptchaImageAsync(CancellationToken ct)
+        public async Task<GetCaptchaResponse> GenerateCaptchaImageAsync(CancellationToken ct)
         {
             string text = GenerateRandomText(5);
             string captchaId = Guid.NewGuid().ToString("N");
@@ -31,7 +32,9 @@ namespace ManageUsers.Application.Services.Implementations
             ct);
 
             byte[] imageBytes = GenerateImage(text);
-            return (captchaId, Convert.ToBase64String(imageBytes));
+            return new GetCaptchaResponse { 
+                CaptchaId = captchaId,
+                CaptchaCode =  Convert.ToBase64String(imageBytes)};
         }
 
         public async Task<bool> ValidateCaptchaAsync(string captchaId, string userInput, CancellationToken ct)
@@ -39,6 +42,7 @@ namespace ManageUsers.Application.Services.Implementations
       
             if (string.IsNullOrWhiteSpace(captchaId) || string.IsNullOrWhiteSpace(userInput))
                 return false;
+            userInput = userInput.Trim();
 
             string? storedHash = await _cache.GetStringAsync(Key(captchaId), ct);
             if (storedHash is null)
@@ -52,6 +56,7 @@ namespace ManageUsers.Application.Services.Implementations
 
         private static string ComputeSha256Hash(string rawData)
         {
+            rawData = rawData.Trim().ToUpperInvariant();
             byte[] bytes = SHA256.HashData(Encoding.UTF8.GetBytes(rawData));
             StringBuilder builder = new();
             foreach (byte b in bytes)
@@ -77,9 +82,16 @@ namespace ManageUsers.Application.Services.Implementations
                 Color = SKColors.Black,
                 IsAntialias = true,
             };
-            //canvas.DrawText(text, 10, 28, paint);
 
+            using SKFont font = new(SKTypeface.FromFamilyName("Arial"), size: 22);
+            using SKTextBlob textBlob = SKTextBlob.Create(text, font);
+
+            if (textBlob is not null)
+            {
+                canvas.DrawText(textBlob, 10, 28, paint);
+            }
             using SKImage image = SKImage.FromBitmap(bitmap);
+            Console.WriteLine(image);
             using SKData data = image.Encode(SKEncodedImageFormat.Png, 100);
             return data.ToArray();
         }

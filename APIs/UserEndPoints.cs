@@ -342,15 +342,18 @@ namespace ManageUsers.Controllers
             }
         }
 
-        private static async Task<Results<Ok<APIResponse<(string,string)>>, NotFound<APIResponse<(string,string)>>>> GenerateCaptchCode(
+        private static async Task<Results<Ok<APIResponse<GetCaptchaResponse>>, NotFound<APIResponse<GetCaptchaResponse>>>> GenerateCaptchCode(
            ISender sender,
-           ClaimsPrincipal claimsPrincipal,
+           HttpContext context,
            CancellationToken ct)
         {
-            APIResponse<(string, string)> response = new();
+            APIResponse<GetCaptchaResponse> response = new();
             try
             {
-               (string,string) result = await sender.Send(new GetCaptchaQuery(), ct);
+                GetCaptchaResponse result = await sender.Send(new GetCaptchaQuery(), ct);
+                context.Response.Headers.CacheControl = "no-store, no-cache, must-revalidate, max-age=0";
+                context.Response.Headers.Pragma = "no-cache";
+                context.Response.Headers.Expires = "0";
 
                 response.StatusCode = System.Net.HttpStatusCode.OK;
                 response.Result.Data = result ;
