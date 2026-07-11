@@ -21,6 +21,7 @@ namespace ManageUsers.Application.DTOs
         public string? RefreshToken { get; set; }
         public string? UserId { get; set; }
         public bool RequiresOtp { get; set; }
+        public  bool IsFirstLogin { get; set; }
         public LoginResultStatus Status { get; set; }
 
     }

@@ -45,7 +45,7 @@ namespace ManageUsers.Application.Handlers
 
                 var encodedToken = Uri.EscapeDataString(token);
                 var url = _configuration["AppSetting:Url"] ?? request.Context.Request.Scheme + "://" + request.Context.Request.Host;
-                var resetLink = $"{url}/reset-password?token={encodedToken}&email={Uri.EscapeDataString(user.Email)}";
+                var resetLink = $"{url}/reset-password?{encodedToken}&email={Uri.EscapeDataString(user.Email)}";
 
                 var emailSent = await _emailService.SendPasswordResetEmailAsync(
                     user.Email,
@@ -58,6 +58,7 @@ namespace ManageUsers.Application.Handlers
                     response.FailedResult = "ارسال ایمیل با مشکل مواجه شد. لطفاً بعداً تلاش کنید.";
                     return response;
                 }
+                response.ResetLink = resetLink;
             }
             catch (Exception)
             {

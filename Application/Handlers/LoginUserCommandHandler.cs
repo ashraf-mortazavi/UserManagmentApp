@@ -91,14 +91,6 @@ namespace ManageUsers.Application.Handlers
                 return response;
             }
 
-            if (user.IsFirstLogin)
-            {
-                user.IsFirstLogin = false;
-                //await _userService.(user);
-                response.Status = LoginResultStatus.FirstLoginPasswordChangeRequired;
-                response.FailedResult = "برای اولین ورود، لطفا رمز عبور خود را تغییر دهید!";
-                return response;
-            }
 
             List<IdentityUserRole<string>> identityUserRoles = await _userRoleService.GetUserRole(user.Id, cancellationToken: cancellationToken);
             Dictionary<string, List<string>> mapRolePermissions = await _rolePermissionService.GetRolePermissionsByUserRolesAsync(identityUserRoles, cancellationToken);
@@ -123,6 +115,10 @@ namespace ManageUsers.Application.Handlers
 
             response.Token = tokenDTO.Token;
             response.RefreshToken = tokenDTO.RefreshToken;
+            response.IsFirstLogin = user.IsFirstLogin ? true : false;
+
+            user.IsFirstLogin = false;
+            _userService.UpdateUser(user, cancellationToken);
 
             return response;
         }

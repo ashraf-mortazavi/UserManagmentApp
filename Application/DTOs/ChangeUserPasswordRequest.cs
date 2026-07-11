@@ -2,11 +2,16 @@
 
 namespace ManageUsers.Application.DTOs
 {
-    public record ChangeUserPasswordRequest(
-      [Description]string CurrentPassword,
-      [Description] string NewPassword,
-      [Description] string ConfirmNewPassword
-  );
+    public class ChangeUserPasswordRequest
+    {
+        [Description("رمز فعلی")]
+        public string CurrentPassword { get; set; }
+        [Description("رمز جدید")]
+        public string NewPassword { get; set; }
+
+        [Description("تکرار رمز جدید")]
+        public string ConfirmNewPassword { get; set; }
+    }
 
 
     public sealed class ChangeUserPasswordResponse : BaseResponse
@@ -14,5 +19,5 @@ namespace ManageUsers.Application.DTOs
         public string Token { get; set; }
         public string RefereshToken { get; set; }
     }
-  
+
 }

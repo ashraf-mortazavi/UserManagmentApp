@@ -37,10 +37,18 @@ namespace ManageUsers.Application.Handlers
                 userResponse.FailedResult = "نقش مورد نظر یافت نشد!";
                 return userResponse;
             }
+            var existingUser = await _userService.GetUserByNationalCodeAsync(request.NationalCode, ct);
+
+            if (existingUser != null)
+            {
+                userResponse.FailedResult = "کد ملی کاربر تکراری است!";
+                return userResponse;
+            }
+
             Organization organization = null;
             if (request.OrganizationId.HasValue)
             {
-                organization= await _organizationService.GetOrganizationAsync(request.OrganizationId!.Value, ct);
+                organization = await _organizationService.GetOrganizationAsync(request.OrganizationId!.Value, ct);
             }
 
             User newUser = new User();
@@ -53,17 +61,21 @@ namespace ManageUsers.Application.Handlers
             newUser.RegionId = request.RegionId;
             newUser.AreaId = request.AreaId;
             newUser.Description = request.Description;
-            newUser.OrganizationId = organization != null ? organization.Id : null ;
+            newUser.OrganizationId = organization != null ? organization.Id : null;
             newUser.PersonalCode = request.PersonalCode;
             newUser.Position = request.Position;
             newUser.CreatedById = request.CreatedById;
             newUser.Enabled = true;
+            newUser.IsFirstLogin = true;
             newUser.CreatedAt = DateTime.UtcNow;
             newUser.UserName = request.UserName;
 
-            newUser = await _userService.AssignUserRolesAsync(user: newUser, request.Password, roles.Select(x => x.Name!).ToList(), cancellationToken: ct);
-
-            userResponse.Id = newUser.Id.ToString();
+            var result = await _userService.AssignUserRolesAsync(user: newUser, request.Password, roles.Select(x => x.Name!).ToList(), cancellationToken: ct);
+            if (!result.Succeeded)
+            {
+                userResponse.FailedResult = result.Errors.Select(x => x.Description).FirstOrDefault();
+                return userResponse;
+            }
             return userResponse;
         }
     }

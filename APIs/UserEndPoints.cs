@@ -45,14 +45,16 @@ namespace ManageUsers.Controllers
                  .Validator<ChangeUserPasswordRequest>();
 
             group.MapPut("/forgotpassword", ForgotPassword)
+                .RequireAuthorization()
                 .WithDisplayName("فراموشی رمز عبور")
-                .WithSummary("Request a password reset email")
+                .WithSummary("ForgotPassword user with email")
                 .Validator<ForgotPasswordRequest>();
 
             group.MapPut("/resetpassword", ResetPassword)
+                .RequireAuthorization()
                 .WithDisplayName("تغییر کامل رمز عبور")
-              .WithSummary("Reset user password")
-              .Validator<ResetPasswordRequest>();
+                .WithSummary("Reset user password")
+                .Validator<ResetPasswordRequest>();
 
             group.MapGet("/{roleId:int}/permissions", GetRolePermissions)
                 .RequireAuthorization()
@@ -61,8 +63,12 @@ namespace ManageUsers.Controllers
 
             group.MapGet("/roles", GetRoles)
                 .RequireAuthorization()
-                .WithDisplayName("دریافت نقش ها")
+                .WithDisplayName("دریافت نقش های کاربر")
                 .WithSummary("Get roles for current user");
+
+            app.MapGet("/api/roles", GetAllRoles)
+                .WithDisplayName("دریافت تمام نقش ها")
+                .WithSummary("Get all available roles for assignment.");
 
             group.MapGet("/captcha", GenerateCaptchCode)
                .AllowAnonymous()
@@ -329,6 +335,7 @@ namespace ManageUsers.Controllers
                 GetRolesResponse rolesResponse = await sender.Send(new GetRolesQuery(userId: userId));
 
                 response.StatusCode = HttpStatusCode.OK;
+                response.Result.Data = rolesResponse;
                 response.Result.Data.Items = rolesResponse.Items;
                 response.Result.pagination.TotalRecords = rolesResponse.Items.Count == 0 ? 0 : rolesResponse.Items.First().TotalRecords;
                 response.Result.pagination.PageNumber = pageNumber;
@@ -356,13 +363,28 @@ namespace ManageUsers.Controllers
                 context.Response.Headers.Expires = "0";
 
                 response.StatusCode = System.Net.HttpStatusCode.OK;
-                response.Result.Data = result ;
+                response.Result.Data = result;
                 return TypedResults.Ok(response);
             }
             catch
             {
                 throw;
             }
+        }
+
+
+        private static async Task<Results<Ok<APIResponse<GetAllRolesResponse>>, BadRequest<APIResponse<GetAllRolesResponse>>>> GetAllRoles(
+            ISender sender,
+            CancellationToken ct)
+        {
+            APIResponse<GetAllRolesResponse> response = new();
+
+            GetAllRolesQuery query = new();
+            GetAllRolesResponse result = await sender.Send(query, ct);
+
+            response.StatusCode = HttpStatusCode.OK;
+            response.Result.Data = result;
+            return TypedResults.Ok(response);
         }
     }
 }

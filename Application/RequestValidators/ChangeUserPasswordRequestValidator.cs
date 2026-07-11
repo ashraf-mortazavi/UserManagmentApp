@@ -31,7 +31,7 @@ namespace ManageUsers.Application.RequestValidators
                 .WithMessage(nameof(ChangeUserPasswordRequest.NewPassword).GetInvalidValueErrorMessage(typeof(ChangeUserPasswordRequest)))
                 .NotNull()
                 .WithMessage(nameof(ChangeUserPasswordRequest.NewPassword).GetInvalidValueErrorMessage(typeof(ChangeUserPasswordRequest)))
-                .Equal(x => x.CurrentPassword)
+                .NotEqual(x => x.CurrentPassword)
                 .WithMessage("رمز عبور جدید و قبلی یکسان هستند!");
 
         }

@@ -11,6 +11,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
+using System.Threading;
 
 namespace ManageUsers.Application.Services.Implementations;
 
@@ -28,23 +29,25 @@ public class UserService(
     private const int MinimumRangeOTP = 0;
     private const int MaximumRangeOTP = 100000;
 
-    public async Task<User> AssignUserRolesAsync(User user, string password, List<string> roles, CancellationToken cancellationToken = default)
+    public async Task<IdentityResult> AssignUserRolesAsync(User user, string password, List<string> roles, CancellationToken cancellationToken = default)
     {
         var createResult = await _userManager.CreateAsync(user, password);
 
         if (!createResult.Succeeded)
         {
             if (createResult.Errors.Any(e => e.Code == "DuplicateUserName"))
-                throw new InvalidOperationException("A user with that name already exists.");
+                return IdentityResult.Failed(new IdentityError { Description = "A user with that name already exists." });
 
-            throw new Exception($"User creation failed: {string.Join(", ", createResult.Errors)}");
+            if (createResult.Errors.Any(e => e.Code == "DuplicateNationalCode"))
+                return IdentityResult.Failed(new IdentityError { Description = "A user with that national code already exists." });
+            
+            return IdentityResult.Failed(new IdentityError { Description = $"User creation failed: {string.Join(", ", createResult.Errors)}" });
         }
-
         var addRoleResult = await _userManager.AddToRolesAsync(user, roles);
         if (!addRoleResult.Succeeded)
-            throw new Exception("Failed to assign roles.");
+            return IdentityResult.Failed(new IdentityError { Description = "Failed to assign roles." });
 
-        return user;
+        return createResult;
     }
 
     public async Task<bool> CheckPasswordAsync(User user, string password)
@@ -177,21 +180,32 @@ public class UserService(
 
     public Task<bool> IsLockedOutAsync(User user)
     {
-       return _userManager.IsLockedOutAsync(user);
+        return _userManager.IsLockedOutAsync(user);
     }
 
     public Task RegisterFailedAttemptAsync(User user)
     {
-       return _userManager.AccessFailedAsync(user);
+        return _userManager.AccessFailedAsync(user);
     }
 
     public Task ResetFailedAttemptsAsync(User user)
     {
-       return _userManager.ResetAccessFailedCountAsync(user);
+        return _userManager.ResetAccessFailedCountAsync(user);
     }
 
     public Task<int> GetAccessFailedCountAsync(User user)
     {
         return _userManager.GetAccessFailedCountAsync(user);
+    }
+
+    public async Task<User?> GetUserByNationalCodeAsync(string nationalCode, CancellationToken ct = default)
+    {
+        return await _unitOfWork.Users.GetUserByNationalCodeAsync(nationalCode, cancellationToken: ct);
+
+    }
+
+    public void UpdateUser(User user, CancellationToken cancellationToken = default)
+    {
+       _unitOfWork.Users.Update(user);
     }
 }

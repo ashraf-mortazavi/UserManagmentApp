@@ -33,6 +33,11 @@ namespace ManageUsers.Infrastructure.Repositories
             return await _context.Users.FirstOrDefaultAsync(u => u.Id.ToString() == userId, ct);
         }
 
+        public async Task<User?> GetUserByNationalCodeAsync(string nationalCode, CancellationToken cancellationToken = default)
+        {
+            return await _context.Users.FirstOrDefaultAsync(u => u.NationalCode == nationalCode, cancellationToken);
+        }
+
         public void Update(User user)
         {
             _context.Update(user);
