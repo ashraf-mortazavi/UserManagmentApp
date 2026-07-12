@@ -34,33 +34,36 @@ public class RequestOtpCodeCommandHandler : IRequestHandler<RequestOtpCodeComman
     public async Task<RequestOTPCodeResponse> Handle(RequestOtpCodeCommand request, CancellationToken cancellationToken)
     {
         RequestOTPCodeResponse requestOTPCodeResponse = new();
-        var user = await _userService.GetUserByIdAsync(request.PhoneNumber, cancellationToken);
+        var user = await _userService.GetUserByPhoneNumber(request.PhoneNumber, cancellationToken);
         if (user is null)
         {
-            requestOTPCodeResponse.FailedResult = "کاربر یافت نشد!";
+            requestOTPCodeResponse.FailedResult = "کاربر با این شماره همراه یافت نشد!";
             return requestOTPCodeResponse;
         }
         string otpCode = null;
         if (user.SendDateTimeOTPCode is null || user.SendDateTimeOTPCode < DateTime.Now.AddMinutes(OtpExpiryMinutes))
         {
-           otpCode = await _userService.GenerateOtpAsync(user.PhoneNumber!, cancellationToken);
+            otpCode = await _userService.GenerateOtpAsync(request.PhoneNumber!, cancellationToken);
         }
 
 
-        string smsMessage = SetSMSMessage(user);
-        if (!string.IsNullOrEmpty(user.PhoneNumber))
-        {
-            await _smsService.Send(user.PhoneNumber, smsMessage);
-        }
+        string smsMessage = SetSMSMessage(otpCode);
+        //await _smsService.Send(request.PhoneNumber, smsMessage);
+        //if (!string.IsNullOrEmpty(user.PhoneNumber))
+        //{
+          
+        //}
         requestOTPCodeResponse.OTPCode = otpCode;
-        requestOTPCodeResponse.OTPCodeValidTimeInMinute = user.SendDateTimeOTPCode.Value.Minute;
+        requestOTPCodeResponse.OTPCodeValidTimeInMinute = OtpExpiryMinutes;
+        user.OTPCode = otpCode;
+        _userService.UpdateUser(user, cancellationToken);
 
         return requestOTPCodeResponse;
 
 
     }
-    private string SetSMSMessage(User user)
+    private string SetSMSMessage(string otpCode)
     {
-        return @$"کد ورود به اپلیکیشن {ApplicationName}: {user.OTPCode}";
+        return @$"کد ورود به اپلیکیشن {ApplicationName}: {otpCode}";
     }
 }

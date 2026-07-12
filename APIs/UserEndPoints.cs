@@ -1,4 +1,5 @@
-﻿using ManageUsers.Application.Commands;
+﻿using Azure.Core;
+using ManageUsers.Application.Commands;
 using ManageUsers.Application.DTOs;
 using ManageUsers.Application.Queries;
 using ManageUsers.Extentions;
@@ -34,9 +35,14 @@ namespace ManageUsers.Controllers
             group.MapPost("/request-otp", RequestOTPCode)
                  .AllowAnonymous()
                  .WithDisplayName("درخواست کد")
-                .WithSummary("Verify OTP code to complete 2FA login and receive JWT token")
+                .WithSummary("Send OTP code to complete 2FA login")
                 .Validator<RequestOTPCode>();
 
+            group.MapPost("/verify", VerifyOTPCode)
+                .AllowAnonymous()
+                .WithDisplayName("تایید کد")
+                .WithSummary("Verify OTP code to complete 2FA login and receive JWT token")
+                .Validator<VerifyOtpRequest>();
 
             group.MapPut("/changepassword", ChangePassword)
                  .RequireAuthorization()
@@ -385,6 +391,40 @@ namespace ManageUsers.Controllers
             response.StatusCode = HttpStatusCode.OK;
             response.Result.Data = result;
             return TypedResults.Ok(response);
+        }
+
+
+        private static async Task<Results<Ok<APIResponse<VerifyOtpResponse>>, BadRequest<APIResponse<VerifyOtpResponse>>>> VerifyOTPCode(
+          [FromBody] VerifyOtpRequest verifyOtpRequest,
+            ISender sender,
+            CancellationToken ct)
+        {
+            APIResponse<VerifyOtpResponse> response = new();
+
+            try
+            {
+
+                var command = new VerifyOtpCodeCommand(verifyOtpRequest.PhoneNumber, verifyOtpRequest.OtpCode);
+                VerifyOtpResponse verifyOtpResponse = await sender.Send(command);
+
+                if (!string.IsNullOrEmpty(verifyOtpResponse.FailedResult))
+                {
+                    response.ErrorMessage = [verifyOtpResponse.FailedResult];
+                    response.IsSuccess = false;
+                    response.StatusCode = HttpStatusCode.BadRequest;
+                    response.Result.Data = verifyOtpResponse;
+                    return TypedResults.BadRequest(response);
+                }
+
+                response.StatusCode = HttpStatusCode.OK;
+                response.Result.Data = verifyOtpResponse;
+                return TypedResults.Ok(response);
+            }
+
+            catch
+            {
+                throw;
+            }
         }
     }
 }

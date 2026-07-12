@@ -45,7 +45,7 @@ public sealed class ResetPasswordCommandHandler : IRequestHandler<ResetPasswordU
                 return response;
             }
 
-            var resetResult = await _userManager.ResetPasswordAsync(user, "", request.NewPassword);
+            var resetResult = await _userManager.ResetPasswordAsync(user, request.Token, request.NewPassword);
 
             if (!resetResult.Succeeded)
             {

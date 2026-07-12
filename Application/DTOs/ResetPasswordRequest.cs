@@ -1,8 +1,17 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel;
+using System.ComponentModel.DataAnnotations;
 
 namespace ManageUsers.Application.DTOs;
 
-public record ResetPasswordRequest(string Email,string NewPassword,string ConfirmPassword);
+public class ResetPasswordRequest
+{
+    [Description("ایمیل")]
+    public string Email { get; set; }
+    [Description("پسورد جدید")]
+    public string NewPassword { get; set; }
+    [Description("تایید پسورد جدید")]
+    public string ConfirmPassword { get; set; }
+}
 
 
 public class ResetPasswordResponse

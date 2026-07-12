@@ -10,7 +10,9 @@ public class EndpointValidatorFilter<T>(IValidator<T> validator) : IEndpointFilt
 
     public async ValueTask<object?> InvokeAsync(EndpointFilterInvocationContext context, EndpointFilterDelegate next)
     {
-        T? inputData = context.GetArgument<T>(0);
+        T? inputData = context.Arguments
+            .OfType<T>()
+            .FirstOrDefault();
 
         if (inputData is not null)
         {

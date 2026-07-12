@@ -43,9 +43,9 @@ namespace ManageUsers.Application.Handlers
 
                 var token = await _userManager.GeneratePasswordResetTokenAsync(user);
 
-                var encodedToken = Uri.EscapeDataString(token);
+                //var encodedToken = Uri.EscapeDataString(token);
                 var url = _configuration["AppSetting:Url"] ?? request.Context.Request.Scheme + "://" + request.Context.Request.Host;
-                var resetLink = $"{url}/reset-password?{encodedToken}&email={Uri.EscapeDataString(user.Email)}";
+                var resetLink = $"{url}/reset-password?{token}&email={Uri.EscapeDataString(user.Email)}";
 
                 var emailSent = await _emailService.SendPasswordResetEmailAsync(
                     user.Email,
