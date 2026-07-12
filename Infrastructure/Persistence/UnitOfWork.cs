@@ -13,7 +13,10 @@ namespace ManageUsers.Infrastructure.Persistence
             IRoleRepository roles,
             IUserRoleRepository userRoles,
             IRolePermissionRepository rolePermissions,
-            IOrganizationRepository organizations)
+            IOrganizationRepository organizations,
+            IAreaRepository areas,
+            IRegionRepository regions,
+            IPermissionRepository permissions)
         {
             _context = context;
             Users = users;
@@ -21,6 +24,9 @@ namespace ManageUsers.Infrastructure.Persistence
             UserRoles = userRoles;
             RolePermissions = rolePermissions;
             Organizations = organizations;
+            Areas = areas;
+            Regions = regions;
+            Permissions = permissions;
         }
 
         public IUserRepository Users { get; }
@@ -32,6 +38,12 @@ namespace ManageUsers.Infrastructure.Persistence
         public IRolePermissionRepository RolePermissions { get; }
 
         public IOrganizationRepository Organizations { get; }
+
+        public IAreaRepository Areas { get; }
+
+        public IRegionRepository Regions { get; }
+
+        public IPermissionRepository Permissions { get; }
 
         public async Task SaveChangesAsync(CancellationToken cancellationToken = default)
         {

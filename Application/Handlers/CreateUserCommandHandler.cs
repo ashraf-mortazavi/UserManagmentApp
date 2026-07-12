@@ -19,12 +19,16 @@ namespace ManageUsers.Application.Handlers
         private readonly IRoleService _roleService;
         private readonly IUserService _userService;
         private readonly IOrganizationService _organizationService;
+        private readonly IAreaService _areaService;
+        private readonly IRegionService _regionService;
 
-        public CreateUserCommandHandler(IRoleService roleService, IUserService userService, IOrganizationService organizationService)
+        public CreateUserCommandHandler(IRoleService roleService, IUserService userService, IOrganizationService organizationService, IAreaService areaService, IRegionService regionService)
         {
             _roleService = roleService;
             _userService = userService;
             _organizationService = organizationService;
+            _areaService = areaService;
+            _regionService = regionService;
         }
 
         public async Task<CreateUserResponse> Handle(CreateUserCommand request, CancellationToken ct)
@@ -48,9 +52,34 @@ namespace ManageUsers.Application.Handlers
             Organization organization = null;
             if (request.OrganizationId.HasValue)
             {
-                organization = await _organizationService.GetOrganizationAsync(request.OrganizationId!.Value, ct);
+                var existOrganization = await _organizationService.GetOrganizationAsync(request.OrganizationId!.Value, ct);
+                if (existOrganization == null)
+                {
+                    userResponse.FailedResult = "سازمان مورد نظر یافت نشد!";
+                    return userResponse;
+                }
             }
 
+            if (request.AreaId.HasValue)
+            {
+                var existArea = await _areaService.GetAreaAsync(request.AreaId!.Value, ct);
+                if (existArea == null)
+                {
+                    userResponse.FailedResult = "منظقه مورد نظر یافت نشد!";
+                    return userResponse;
+                }
+            }
+
+
+            if (request.RegionId.HasValue)
+            {
+                var existRegion = await _regionService.GetRegionAsync(request.RegionId!.Value, ct);
+                if (existRegion == null)
+                {
+                    userResponse.FailedResult = "ناحیه مورد نظر یافت نشد!";
+                    return userResponse;
+                }
+            }
             User newUser = new User();
             newUser.FirstName = request.FirstName;
             newUser.LastName = request.LastName;
@@ -61,7 +90,7 @@ namespace ManageUsers.Application.Handlers
             newUser.RegionId = request.RegionId;
             newUser.AreaId = request.AreaId;
             newUser.Description = request.Description;
-            newUser.OrganizationId = organization != null ? organization.Id : null;
+            newUser.OrganizationId = request.OrganizationId;
             newUser.PersonalCode = request.PersonalCode;
             newUser.Position = request.Position;
             newUser.CreatedById = request.CreatedById;

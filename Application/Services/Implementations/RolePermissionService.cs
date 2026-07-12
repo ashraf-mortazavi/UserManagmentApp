@@ -9,6 +9,29 @@ namespace ManageUsers.Application.Services.Implementations
     public class RolePermissionService(IUnitOfWork unitOfWork) : IRolePermissionService
     {
         private readonly IUnitOfWork _unitOfWork = unitOfWork;
+
+        public async Task<List<RolePermission>> GetRolePermisionsByRoleIdAsync(string roleId, CancellationToken cancellationToken = default)
+        {
+            if (roleId is null ||string.IsNullOrEmpty(roleId))
+            {
+                return new List<RolePermission>();
+            }
+            var roleIds = new List<string>();
+            roleIds.Add(roleId);
+
+            List<Role?> existingRole = await _unitOfWork.Roles.GetRolesAsync(roleIds:roleIds , cancellationToken: cancellationToken);
+
+            if (!existingRole.Any() )
+            {
+                return new List<RolePermission>();
+            }
+
+            List<RolePermission> rolePermissions = await _unitOfWork.RolePermissions
+                .GetRolePermisionsByRoleIds(existingRole.Select(e => e.Id.ToString()).ToList(), cancellationToken);
+
+            return rolePermissions;
+        }
+
         public async Task<List<RolePermission>> GetRolePermisionsByRoleIdsAsync(List<string> roleIds, CancellationToken cancellationToken = default)
         {
             if (roleIds is null || roleIds.Count == 0)

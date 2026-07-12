@@ -16,6 +16,11 @@ namespace ManageUsers.Application.Services.Implementations
             return await _roleManager.Roles.ToListAsync(cancellationToken: ct);
         }
 
+        public async Task<Role?> GetRoleAsync(string roleId, CancellationToken cancellationToken = default)
+        {
+            return await _roleManager.Roles.Where(r => r.Id.ToString() == roleId).FirstOrDefaultAsync(cancellationToken);
+        }
+
         public async Task<List<Role?>> GetRolesAsync(List<string> roleIds, CancellationToken cancellationToken = default)
         {
             if (roleIds is null || roleIds.Count == 0 || !roleIds.Any())

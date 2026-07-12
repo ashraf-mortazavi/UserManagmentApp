@@ -9,6 +9,9 @@ public interface IUnitOfWork
     IUserRoleRepository UserRoles { get; }
     IRolePermissionRepository RolePermissions { get; }
     IOrganizationRepository Organizations { get; }
+    IAreaRepository Areas { get; }
+    IRegionRepository Regions { get; }
+    IPermissionRepository Permissions { get; }
 
     Task SaveChangesAsync(CancellationToken cancellationToken = default);
 }

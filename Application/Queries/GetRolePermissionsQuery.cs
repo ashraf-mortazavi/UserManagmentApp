@@ -3,9 +3,9 @@ using MediatR;
 
 namespace ManageUsers.Application.Queries
 {
-    public class GetRolePermissionsQuery(List<string> roleIds) : IRequest<List<GetRolePermissionsResponse>>
+    public class GetRolePermissionsQuery(string roleId) : IRequest<List<GetRolePermissionsResponse>>
     {
-        public List<string> RoleIds { get; set; } = roleIds;
+        public string RoleId { get; set; } = roleId;
 
     }
 }

@@ -90,10 +90,10 @@ namespace ManageUsers.Application.RequestValidators
             RuleFor(x => x.OrganizationId)
                .NotNull()
                .When(x => !x.AreaId.HasValue && !x.RegionId.HasValue)
-               .WithMessage(nameof(CreateUserRequest.RegionId).GetNullOrEmptyErrorMessage(typeof(CreateUserRequest)))
+               .WithMessage(nameof(CreateUserRequest.OrganizationId).GetNullOrEmptyErrorMessage(typeof(CreateUserRequest)))
                .NotEmpty()
                .When(x => !x.AreaId.HasValue && !x.RegionId.HasValue)
-               .WithMessage(nameof(CreateUserRequest.RegionId).GetNullOrEmptyErrorMessage(typeof(CreateUserRequest)))
+               .WithMessage(nameof(CreateUserRequest.OrganizationId).GetNullOrEmptyErrorMessage(typeof(CreateUserRequest)))
                .GreaterThan(0)
                .When(x => !x.AreaId.HasValue && !x.RegionId.HasValue)
                .WithMessage(nameof(CreateUserRequest.OrganizationId).GetGreaterThanErrorMessage(typeof(CreateUserRequest), 0));

@@ -12,34 +12,41 @@ public class GetRolePermissionsQueryHandler : IRequestHandler<GetRolePermissions
 {
     private readonly IRoleService _roleService;
     private readonly IRolePermissionService _rolePermissionService;
+    private readonly IPermissionService _permissionService;
 
-    public GetRolePermissionsQueryHandler(IRoleService roleService, IRolePermissionService rolePermissionService)
+    public GetRolePermissionsQueryHandler(IRoleService roleService, IRolePermissionService rolePermissionService, IPermissionService permissionService)
     {
         _roleService = roleService;
         _rolePermissionService = rolePermissionService;
+        _permissionService = permissionService;
     }
     public async Task<List<GetRolePermissionsResponse>> Handle(GetRolePermissionsQuery request, CancellationToken cancellationToken)
     {
         List<GetRolePermissionsResponse> rolePermissionsResponses = new();
         List<RolePermissionsItem> items = new();
 
-        List<Role?> roles = await _roleService.GetRolesAsync(request.RoleIds, cancellationToken);
+        Role role = await _roleService.GetRoleAsync(request.RoleId, cancellationToken);
 
-        if (roles == null || !roles.Any())
+        if (role == null)
         {
             rolePermissionsResponses.Add(new GetRolePermissionsResponse()
             {
-                FailedResult = "کاربر یافت نشد!"
+                FailedResult = "کاربر با این نقش یافت نشد!"
             });
             return rolePermissionsResponses;
         }
-        List<RoleDto> roleDtos = roles.Select(r => new RoleDto (Id: r.Id, Name: r.Name)).ToList();
+        List<RoleDto> roleDtos = new List<RoleDto> 
+        { 
+            new RoleDto (Id : role.Id, Name :role.Name!) 
+        };
 
-        List<RolePermission> rolePermissions = await _rolePermissionService.GetRolePermisionsByRoleIdsAsync(request.RoleIds, cancellationToken);
+        var roleIds = new List<string>();
+        roleIds.Add(request.RoleId);
 
-        List<PermissionDto> permissionDtos = rolePermissions
-            .Select(rp => rp.Permission)
-            .Where(p => p is not null)
+        List<RolePermission> rolePermissions = await _rolePermissionService.GetRolePermisionsByRoleIdsAsync(roleIds, cancellationToken);
+        var permissionIds = rolePermissions.Select(p => p.PermissionId.ToString()).ToList();
+        List<Permission> permissions = await _permissionService.GetRolePermisionsByIdsAsync(permissionIds, cancellationToken);
+        List<PermissionDto> permissionDtos = permissions
             .Select(p => new PermissionDto(p!.Id, p!.Key, p!.Name, p!.IsActive, p!.SortOrder, p!.ParentId))
             .OrderBy(p => p.SortOrder)
             .ToList();
