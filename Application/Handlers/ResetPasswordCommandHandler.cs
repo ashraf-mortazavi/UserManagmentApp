@@ -54,7 +54,7 @@ public sealed class ResetPasswordCommandHandler : IRequestHandler<ResetPasswordU
                 return response;
             }
 
-            await _userManager.UpdateSecurityStampAsync(user);
+           
 
 
             IdentityResult identityResult = await _userService.SetPasswordByUserIdAsync(user.Id.ToString(), request.NewPassword);
@@ -65,6 +65,7 @@ public sealed class ResetPasswordCommandHandler : IRequestHandler<ResetPasswordU
                 return response;
             }
 
+            await _userManager.UpdateSecurityStampAsync(user);
 
             List<IdentityUserRole<string>> identityUserRoles = await _userRoleService.GetUserRole(user.Id, cancellationToken: cancellationToken);
             Dictionary<string, List<string>> mapRolePermissions = await _rolePermissionService.GetRolePermissionsByUserRolesAsync(identityUserRoles, cancellationToken);
