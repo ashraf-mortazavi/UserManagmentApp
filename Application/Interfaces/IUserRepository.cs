@@ -10,6 +10,7 @@ namespace ManageUsers.Application.Interfaces
         Task<User?> GetByUserNameAsync(string userName, CancellationToken cancellationToken = default);
         Task<User?> GetUserByNationalCodeAsync(string nationalCode, CancellationToken cancellationToken = default);
         Task<User?> GetByPhoneNumberAsync(string phoneNumber, CancellationToken cancellationToken = default);
+        Task<List<User>> GetAllUsersWithFilterAsync(string filter, int page, int pagesize, CancellationToken cancellationToken);
         void Update(User user);
     }
 }

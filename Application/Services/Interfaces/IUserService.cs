@@ -26,5 +26,10 @@ namespace ManageUsers.Application.Services.Interfaces
         Task RegisterFailedAttemptAsync(User user);
         Task ResetFailedAttemptsAsync(User user);
         Task<int> GetAccessFailedCountAsync(User user);
+
+        Task<List<User>> GetAllUsersAsync(string? searchTerm, int pageNumber, int pageSize, CancellationToken ct);
+
+        Task<int> GetTotalCountAsync(string? searchTerm, CancellationToken ct);
+
     }
 }

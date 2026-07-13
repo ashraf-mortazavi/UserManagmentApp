@@ -81,6 +81,10 @@ namespace ManageUsers.Controllers
                .WithDisplayName("دریافت کد امنیتی")
                .WithSummary("Generate Captch Code");
 
+            group.MapGet("", GetUsers)
+                .RequireAuthorization()
+                .WithDisplayName("دریافت کاربران")
+                .WithSummary("Get All Users");
         }
 
         public static async Task<Results<Ok<APIResponse<CreateUserResponse>>, BadRequest<APIResponse<CreateUserResponse>>>> CreateUser(
@@ -426,5 +430,36 @@ namespace ManageUsers.Controllers
                 throw;
             }
         }
+
+
+        public static async Task<Results<Ok<APIResponse<GetUsersResponse>>, BadRequest<APIResponse<GetUsersResponse>>>> GetUsers(
+            [AsParameters] GetUsersQuery query,
+            IMediator mediator,
+            CancellationToken ct)
+        {
+            APIResponse<GetUsersResponse> response = new();
+
+            try
+            {
+                GetUsersResponse getUsersResponse = await mediator.Send(query, ct);
+
+                if (!string.IsNullOrEmpty(getUsersResponse.FailedResult))
+                {
+                    response.ErrorMessage = [getUsersResponse.FailedResult];
+                    response.IsSuccess = false;
+                    response.StatusCode = HttpStatusCode.BadRequest;
+                    return TypedResults.BadRequest(response);
+                }
+
+                response.StatusCode = HttpStatusCode.OK;
+                response.Result.Data = getUsersResponse;
+                return TypedResults.Ok(response);
+            }
+            catch (Exception)
+            {
+                throw;
+            }
+        }
+
     }
 }

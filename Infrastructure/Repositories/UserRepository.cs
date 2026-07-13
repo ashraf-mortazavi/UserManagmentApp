@@ -3,6 +3,7 @@ using ManageUsers.Application.Interfaces;
 using ManageUsers.Domain;
 using ManageUsers.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
+using System.Linq;
 
 namespace ManageUsers.Infrastructure.Repositories
 {
@@ -13,6 +14,28 @@ namespace ManageUsers.Infrastructure.Repositories
         public UserRepository(AppDbContext context)
         {
             _context = context;
+        }
+
+        public async Task<List<User>> GetAllUsersWithFilterAsync(string filter, int page, int pagesize, CancellationToken cancellationToken)
+        { 
+           
+            if (!string.IsNullOrEmpty(filter))
+            {
+                string toUpperFilter = filter.ToUpper();
+                return await _context.Users.Where(u => u.FirstName.ToUpper().Contains(toUpperFilter) || u.LastName.ToUpper().Contains(toUpperFilter) ||
+                    u.PhoneNumber.ToUpper().Contains(toUpperFilter) || u.UserName.ToUpper().Contains(toUpperFilter))
+                    .OrderByDescending(u => u.CreatedAt)
+                    .Skip((page - 1) * pagesize)
+                    .Take(pagesize)
+                    .AsNoTracking()
+                    .ToListAsync(cancellationToken);
+            }
+            return await _context.Users
+                    .OrderByDescending(u => u.CreatedAt)
+                    .Skip((page - 1) * pagesize)
+                    .Take(pagesize)
+                    .AsNoTracking()
+                    .ToListAsync(cancellationToken);
         }
 
         public async Task<User?> GetByPhoneNumberAsync(string phoneNumber, CancellationToken cancellationToken = default)

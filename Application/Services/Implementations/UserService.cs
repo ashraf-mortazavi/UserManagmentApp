@@ -12,6 +12,7 @@ using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 namespace ManageUsers.Application.Services.Implementations;
 
@@ -207,5 +208,22 @@ public class UserService(
     public void UpdateUser(User user, CancellationToken cancellationToken = default)
     {
        _unitOfWork.Users.Update(user);
+    }
+
+    public async Task<List<User>> GetAllUsersAsync(string? searchTerm, int pageNumber, int pageSize, CancellationToken ct)
+    {
+        List<User> users = new();
+        users = await _unitOfWork.Users.GetAllUsersWithFilterAsync(searchTerm,pageNumber, pageSize, ct);
+        return users;
+    }
+
+    public async Task<int> GetTotalCountAsync(string? searchTerm, CancellationToken ct)
+    {
+        List<User> users = new();
+        if (!string.IsNullOrWhiteSpace(searchTerm))
+        {
+            users = await _unitOfWork.Users.GetAllUsersWithFilterAsync(searchTerm, 0, 0, ct);
+        }
+        return users.Count();
     }
 }

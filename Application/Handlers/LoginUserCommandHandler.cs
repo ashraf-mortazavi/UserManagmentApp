@@ -116,7 +116,7 @@ namespace ManageUsers.Application.Handlers
             response.Token = tokenDTO.Token;
             response.RefreshToken = tokenDTO.RefreshToken;
             response.IsFirstLogin = user.IsFirstLogin ? true : false;
-
+            response.PhoneNumber = user.PhoneNumber;
             user.IsFirstLogin = false;
             _userService.UpdateUser(user, cancellationToken);
 
