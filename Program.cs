@@ -177,12 +177,11 @@ builder.Services.AddOpenApi(options =>
     options.AddDocumentTransformer<BearerSecuritySchemeTransformer>();
 });
 
-const string CorsPolicy = "FrontendPolicy";
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy(CorsPolicy, policy =>
+    options.AddPolicy("َAllowFrontend", policy =>
     {
-        policy.WithOrigins("http://localhost:3000") // or 5173 for Vite � match exactly what your browser shows
+        policy.WithOrigins("http://localhost:5063") // or 5173 for Vite � match exactly what your browser shows
               .AllowAnyHeader()
               .AllowAnyMethod();
     });
@@ -191,6 +190,7 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
+app.UseCors("َAllowFrontend");
 
 app.MapOpenApi();
 app.MapScalarApiReference(options =>
@@ -203,9 +203,8 @@ app.MapScalarApiReference(options =>
 
 app.UseForwardedHeaders();
 
-app.UseHttpsRedirection();
 
-app.UseCors(CorsPolicy);
+
 
 app.UseAuthentication();
 
