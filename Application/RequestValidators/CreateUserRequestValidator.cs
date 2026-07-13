@@ -1,8 +1,9 @@
-﻿using FluentValidation;
+using FluentValidation;
 using ManageUsers.Application.Common.Utilities;
 using ManageUsers.Application.CustomValidators;
 using ManageUsers.Application.DTOs;
 using ManageUsers.Application.Extentions;
+using ManageUsers.Domain;
 
 namespace ManageUsers.Application.RequestValidators
 {
@@ -63,40 +64,37 @@ namespace ManageUsers.Application.RequestValidators
                 .NotEmpty()
                 .WithMessage(nameof(CreateUserRequest.UserRoleIds).GetNullOrEmptyErrorMessage(typeof(CreateUserRequest)));
 
-
             RuleFor(x => x.AreaId)
                 .NotNull()
-                .When(x => !x.OrganizationId.HasValue)
+                .When(x => x.AccessLevel == AccessLevel.Area || x.AccessLevel == AccessLevel.Zone)
                 .WithMessage(nameof(CreateUserRequest.AreaId).GetNullOrEmptyErrorMessage(typeof(CreateUserRequest)))
                 .NotEmpty()
-                .When(x => !x.OrganizationId.HasValue)
+                .When(x => x.AccessLevel == AccessLevel.Area || x.AccessLevel == AccessLevel.Zone)
                 .WithMessage(nameof(CreateUserRequest.AreaId).GetNullOrEmptyErrorMessage(typeof(CreateUserRequest)))
                 .GreaterThan(0)
-                .When(x => !x.OrganizationId.HasValue)
+                .When(x => x.AccessLevel == AccessLevel.Area || x.AccessLevel == AccessLevel.Zone)
                 .WithMessage(nameof(CreateUserRequest.AreaId).GetGreaterThanErrorMessage(typeof(CreateUserRequest), 0));
-
 
             RuleFor(x => x.RegionId)
                 .NotNull()
-                .When(x => !x.OrganizationId.HasValue)
+                .When(x => x.AccessLevel == AccessLevel.Zone)
                 .WithMessage(nameof(CreateUserRequest.RegionId).GetNullOrEmptyErrorMessage(typeof(CreateUserRequest)))
                 .NotEmpty()
-                .When(x => !x.OrganizationId.HasValue)
+                .When(x => x.AccessLevel == AccessLevel.Zone)
                 .WithMessage(nameof(CreateUserRequest.RegionId).GetNullOrEmptyErrorMessage(typeof(CreateUserRequest)))
                 .GreaterThan(0)
-                .When(x => !x.OrganizationId.HasValue)
+                .When(x => x.AccessLevel == AccessLevel.Zone)
                 .WithMessage(nameof(CreateUserRequest.RegionId).GetGreaterThanErrorMessage(typeof(CreateUserRequest), 0));
 
-            RuleFor(x => x.OrganizationId)
-               .NotNull()
-               .When(x => !x.AreaId.HasValue && !x.RegionId.HasValue)
-               .WithMessage(nameof(CreateUserRequest.OrganizationId).GetNullOrEmptyErrorMessage(typeof(CreateUserRequest)))
-               .NotEmpty()
-               .When(x => !x.AreaId.HasValue && !x.RegionId.HasValue)
-               .WithMessage(nameof(CreateUserRequest.OrganizationId).GetNullOrEmptyErrorMessage(typeof(CreateUserRequest)))
-               .GreaterThan(0)
-               .When(x => !x.AreaId.HasValue && !x.RegionId.HasValue)
-               .WithMessage(nameof(CreateUserRequest.OrganizationId).GetGreaterThanErrorMessage(typeof(CreateUserRequest), 0));
+            RuleFor(x => x.AreaId)
+                .Null()
+                .When(x => x.AccessLevel == AccessLevel.Setad)
+                .WithMessage("برای سطح دسترسی ستاد نباید منطقه انتخاب شود.");
+
+            RuleFor(x => x.RegionId)
+                .Null()
+                .When(x => x.AccessLevel != AccessLevel.Zone)
+                .WithMessage("ناحیه فقط برای سطح دسترسی ناحیه قابل انتخاب است.");
         }
     }
 }

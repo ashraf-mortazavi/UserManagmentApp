@@ -1,4 +1,6 @@
-﻿namespace ManageUsers.Application.DTOs
+using ManageUsers.Domain;
+
+namespace ManageUsers.Application.DTOs
 {
     public class GetUsersResponse
     {
@@ -15,6 +17,11 @@
         public string? UserName { get; set; }
         public string? PhoneNumber { get; set; }
         public bool Enabled { get; set; }
+        public AccessLevel AccessLevel { get; set; }
+        public int? AreaId { get; set; }
+        public int? RegionId { get; set; }
+        public string? AreaName { get; set; }
+        public string? RegionName { get; set; }
         public DateTime CreatedAt { get; set; }
     }
 }

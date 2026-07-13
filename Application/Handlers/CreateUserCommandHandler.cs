@@ -1,4 +1,4 @@
-﻿using Azure;
+using Azure;
 using ManageUsers.Application.Commands;
 using ManageUsers.Application.DTOs;
 using ManageUsers.Application.Interfaces;
@@ -70,7 +70,6 @@ namespace ManageUsers.Application.Handlers
                 }
             }
 
-
             if (request.RegionId.HasValue)
             {
                 var existRegion = await _regionService.GetRegionAsync(request.RegionId!.Value, ct);
@@ -80,6 +79,25 @@ namespace ManageUsers.Application.Handlers
                     return userResponse;
                 }
             }
+
+            if (request.AccessLevel == AccessLevel.Area && !request.AreaId.HasValue)
+            {
+                userResponse.FailedResult = "برای سطح دسترسی منطقه، انتخاب منطقه الزامی است!";
+                return userResponse;
+            }
+
+            if (request.AccessLevel == AccessLevel.Zone && (!request.AreaId.HasValue || !request.RegionId.HasValue))
+            {
+                userResponse.FailedResult = "برای سطح دسترسی ناحیه، انتخاب منطقه و ناحیه الزامی است!";
+                return userResponse;
+            }
+
+            if (request.AccessLevel == AccessLevel.Setad && (request.AreaId.HasValue || request.RegionId.HasValue))
+            {
+                userResponse.FailedResult = "برای سطح دسترسی ستاد نباید منطقه یا ناحیه انتخاب شود!";
+                return userResponse;
+            }
+
             User newUser = new User();
             newUser.FirstName = request.FirstName;
             newUser.LastName = request.LastName;
@@ -95,6 +113,7 @@ namespace ManageUsers.Application.Handlers
             newUser.Position = request.Position;
             newUser.CreatedById = request.CreatedById;
             newUser.Enabled = true;
+            newUser.AccessLevel = request.AccessLevel;
             newUser.IsFirstLogin = true;
             newUser.CreatedAt = DateTime.UtcNow;
             newUser.UserName = request.UserName;

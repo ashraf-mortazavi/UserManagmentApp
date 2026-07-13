@@ -1,4 +1,4 @@
-﻿using ManageUsers.Application.Common;
+using ManageUsers.Application.Common;
 using ManageUsers.Application.Common.Utilities;
 using ManageUsers.Application.DTOs;
 using ManageUsers.Application.Services.Interfaces;
@@ -119,6 +119,27 @@ public class UserService(
         return await _unitOfWork.Users.GetUserByIdAsync(userId, ct: ct);
     }
 
+    public async Task<User?> GetUserByIdWithRolesAsync(string userId, CancellationToken ct = default)
+    {
+        return await _unitOfWork.Users.GetUserByIdWithRolesAsync(userId, ct);
+    }
+
+    public async Task<List<string>> GetUserRoleIdsAsync(int userId, CancellationToken ct = default)
+    {
+        return await _unitOfWork.Users.GetUserRoleIdsAsync(userId, ct);
+    }
+
+    public async Task<IdentityResult> UpdateUserRolesAsync(User user, List<string> newRoleNames, CancellationToken ct = default)
+    {
+        var currentRoles = await _userManager.GetRolesAsync(user);
+        var removeResult = await _userManager.RemoveFromRolesAsync(user, currentRoles);
+        if (!removeResult.Succeeded)
+            return removeResult;
+
+        var addResult = await _userManager.AddToRolesAsync(user, newRoleNames);
+        return addResult;
+    }
+
     public async Task<User?> GetUserByPhoneNumber(string phoneNumber, CancellationToken ct = default)
     {
         return await _unitOfWork.Users.GetByPhoneNumberAsync(phoneNumber, cancellationToken: ct);
@@ -210,20 +231,23 @@ public class UserService(
        _unitOfWork.Users.Update(user);
     }
 
-    public async Task<List<User>> GetAllUsersAsync(string? searchTerm, int pageNumber, int pageSize, CancellationToken ct)
+    public async Task<List<User>> GetAllUsersAsync(string? searchTerm, int pageNumber, int pageSize, AccessLevel callerAccessLevel, int? callerAreaId, int? callerRegionId, CancellationToken ct)
     {
-        List<User> users = new();
-        users = await _unitOfWork.Users.GetAllUsersWithFilterAsync(searchTerm,pageNumber, pageSize, ct);
-        return users;
+        return await _unitOfWork.Users.GetAllUsersWithFilterAsync(searchTerm ?? string.Empty, pageNumber, pageSize, callerAccessLevel, callerAreaId, callerRegionId, ct);
     }
 
-    public async Task<int> GetTotalCountAsync(string? searchTerm, CancellationToken ct)
+    public async Task<int> GetTotalCountAsync(string? searchTerm, AccessLevel callerAccessLevel, int? callerAreaId, int? callerRegionId, CancellationToken ct)
     {
-        List<User> users = new();
-        if (!string.IsNullOrWhiteSpace(searchTerm))
-        {
-            users = await _unitOfWork.Users.GetAllUsersWithFilterAsync(searchTerm, 0, 0, ct);
-        }
-        return users.Count();
+        return await _unitOfWork.Users.GetTotalCountAsync(searchTerm ?? string.Empty, callerAccessLevel, callerAreaId, callerRegionId, ct);
+    }
+
+    public async Task<List<Area>> GetAllAreasAsync(CancellationToken ct = default)
+    {
+        return await _unitOfWork.Users.GetAllAreasAsync(ct);
+    }
+
+    public async Task<List<Region>> GetRegionsByAreaAsync(int areaId, CancellationToken ct = default)
+    {
+        return await _unitOfWork.Users.GetRegionsByAreaAsync(areaId, ct);
     }
 }

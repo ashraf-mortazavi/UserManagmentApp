@@ -1,4 +1,4 @@
-﻿using ManageUsers.Application.DTOs;
+using ManageUsers.Application.DTOs;
 using ManageUsers.Domain;
 using Microsoft.AspNetCore.Identity;
 
@@ -7,6 +7,9 @@ namespace ManageUsers.Application.Services.Interfaces
     public interface IUserService
     {
         Task<User> GetUserByIdAsync(string userId, CancellationToken ct = default);
+        Task<User?> GetUserByIdWithRolesAsync(string userId, CancellationToken ct = default);
+        Task<List<string>> GetUserRoleIdsAsync(int userId, CancellationToken ct = default);
+        Task<IdentityResult> UpdateUserRolesAsync(User user, List<string> newRoleNames, CancellationToken ct = default);
         Task<User?> GetByUserNameAsync(string userName, CancellationToken ct = default);
         Task<User?> GetUserByPhoneNumber(string phoneNumber, CancellationToken ct = default);
         Task<User?> GetUserByNationalCodeAsync(string nationalCode, CancellationToken ct = default);
@@ -27,9 +30,12 @@ namespace ManageUsers.Application.Services.Interfaces
         Task ResetFailedAttemptsAsync(User user);
         Task<int> GetAccessFailedCountAsync(User user);
 
-        Task<List<User>> GetAllUsersAsync(string? searchTerm, int pageNumber, int pageSize, CancellationToken ct);
+        Task<List<User>> GetAllUsersAsync(string? searchTerm, int pageNumber, int pageSize, AccessLevel callerAccessLevel, int? callerAreaId, int? callerRegionId, CancellationToken ct);
 
-        Task<int> GetTotalCountAsync(string? searchTerm, CancellationToken ct);
+        Task<int> GetTotalCountAsync(string? searchTerm, AccessLevel callerAccessLevel, int? callerAreaId, int? callerRegionId, CancellationToken ct);
+
+        Task<List<Area>> GetAllAreasAsync(CancellationToken ct = default);
+        Task<List<Region>> GetRegionsByAreaAsync(int areaId, CancellationToken ct = default);
 
     }
 }

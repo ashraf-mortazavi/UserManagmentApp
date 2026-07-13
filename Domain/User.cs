@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity;
 using System;
 using System.Collections.Generic;
 
@@ -14,6 +14,7 @@ public sealed class User : IdentityUser<int>
     public string? Position { get; set; }
     public string? Description { get; set; }
     public bool Enabled { get; set; } = true;
+    public AccessLevel AccessLevel { get; set; } = AccessLevel.Setad;
     public string? CreatedById { get; set; }
 
     public string? OTPCode { get; set; }

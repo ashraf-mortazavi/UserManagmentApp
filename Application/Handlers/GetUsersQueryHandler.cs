@@ -1,4 +1,4 @@
-﻿using ManageUsers.Application.DTOs;
+using ManageUsers.Application.DTOs;
 using ManageUsers.Application.Queries;
 using ManageUsers.Application.Services.Interfaces;
 using ManageUsers.Domain;
@@ -18,21 +18,29 @@ namespace ManageUsers.Application.Handlers
         public async Task<GetUsersResponse> Handle(GetUsersQuery request, CancellationToken ct)
         {
             var response = new GetUsersResponse();
-            
-            List<User> users = await _userService.GetAllUsersAsync(request.SerachItem, request.PageNumber, request.PageSize, ct);
 
-                response.Users = users.Select(u => new UserDto
-                {
-                    Id = u.Id.ToString(),
-                    FirstName = u.FirstName,
-                    LastName = u.LastName,
-                    UserName = u.UserName,
-                    PhoneNumber = u.PhoneNumber,
-                    Enabled = u.Enabled,
-                    CreatedAt = u.CreatedAt
-                }).ToList();
+            List<User> users = await _userService.GetAllUsersAsync(
+                request.SerachItem, request.PageNumber, request.PageSize,
+                request.CallerAccessLevel, request.CallerAreaId, request.CallerRegionId, ct);
 
-                response.TotalCount = await _userService.GetTotalCountAsync(request.SerachItem, ct);
+            response.Users = users.Select(u => new UserDto
+            {
+                Id = u.Id.ToString(),
+                FirstName = u.FirstName,
+                LastName = u.LastName,
+                UserName = u.UserName,
+                PhoneNumber = u.PhoneNumber,
+                Enabled = u.Enabled,
+                AccessLevel = u.AccessLevel,
+                AreaId = u.AreaId,
+                RegionId = u.RegionId,
+                AreaName = u.Area?.Name,
+                RegionName = u.Region?.Name,
+                CreatedAt = u.CreatedAt
+            }).ToList();
+
+            response.TotalCount = await _userService.GetTotalCountAsync(
+                request.SerachItem, request.CallerAccessLevel, request.CallerAreaId, request.CallerRegionId, ct);
 
             return response;
         }

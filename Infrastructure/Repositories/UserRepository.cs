@@ -1,4 +1,4 @@
-﻿using ManageUsers.Application.Common;
+using ManageUsers.Application.Common;
 using ManageUsers.Application.Interfaces;
 using ManageUsers.Domain;
 using ManageUsers.Infrastructure.Persistence;
@@ -16,26 +16,74 @@ namespace ManageUsers.Infrastructure.Repositories
             _context = context;
         }
 
-        public async Task<List<User>> GetAllUsersWithFilterAsync(string filter, int page, int pagesize, CancellationToken cancellationToken)
-        { 
-           
+        public async Task<List<User>> GetAllUsersWithFilterAsync(string filter, int page, int pagesize, AccessLevel callerAccessLevel, int? callerAreaId, int? callerRegionId, CancellationToken cancellationToken)
+        {
+            IQueryable<User> query = _context.Users
+                .Include(u => u.Area)
+                .Include(u => u.Region);
+
+            query = ApplyAccessLevelFilter(query, callerAccessLevel, callerAreaId, callerRegionId);
+
             if (!string.IsNullOrEmpty(filter))
             {
                 string toUpperFilter = filter.ToUpper();
-                return await _context.Users.Where(u => u.FirstName.ToUpper().Contains(toUpperFilter) || u.LastName.ToUpper().Contains(toUpperFilter) ||
-                    u.PhoneNumber.ToUpper().Contains(toUpperFilter) || u.UserName.ToUpper().Contains(toUpperFilter))
-                    .OrderByDescending(u => u.CreatedAt)
-                    .Skip((page - 1) * pagesize)
-                    .Take(pagesize)
-                    .AsNoTracking()
-                    .ToListAsync(cancellationToken);
+                query = query.Where(u => u.FirstName.ToUpper().Contains(toUpperFilter) || u.LastName.ToUpper().Contains(toUpperFilter) ||
+                    u.PhoneNumber.ToUpper().Contains(toUpperFilter) || u.UserName.ToUpper().Contains(toUpperFilter));
             }
-            return await _context.Users
-                    .OrderByDescending(u => u.CreatedAt)
-                    .Skip((page - 1) * pagesize)
-                    .Take(pagesize)
-                    .AsNoTracking()
-                    .ToListAsync(cancellationToken);
+
+            return await query
+                .OrderByDescending(u => u.CreatedAt)
+                .Skip((page - 1) * pagesize)
+                .Take(pagesize)
+                .AsNoTracking()
+                .ToListAsync(cancellationToken);
+        }
+
+        public async Task<int> GetTotalCountAsync(string filter, AccessLevel callerAccessLevel, int? callerAreaId, int? callerRegionId, CancellationToken cancellationToken)
+        {
+            IQueryable<User> query = _context.Users;
+
+            query = ApplyAccessLevelFilter(query, callerAccessLevel, callerAreaId, callerRegionId);
+
+            if (!string.IsNullOrEmpty(filter))
+            {
+                string toUpperFilter = filter.ToUpper();
+                query = query.Where(u => u.FirstName.ToUpper().Contains(toUpperFilter) || u.LastName.ToUpper().Contains(toUpperFilter) ||
+                    u.PhoneNumber.ToUpper().Contains(toUpperFilter) || u.UserName.ToUpper().Contains(toUpperFilter));
+            }
+
+            return await query.CountAsync(cancellationToken);
+        }
+
+        private IQueryable<User> ApplyAccessLevelFilter(IQueryable<User> query, AccessLevel callerAccessLevel, int? callerAreaId, int? callerRegionId)
+        {
+            return callerAccessLevel switch
+            {
+                AccessLevel.Setad => query,
+                AccessLevel.Area => query.Where(u =>
+                    (u.AreaId == callerAreaId) ||
+                    (u.Region != null && u.Region.AreaId == callerAreaId)),
+                AccessLevel.Zone => query.Where(u =>
+                    u.AreaId == callerAreaId && u.RegionId == callerRegionId),
+                _ => query
+            };
+        }
+
+        public async Task<List<Area>> GetAllAreasAsync(CancellationToken cancellationToken = default)
+        {
+            return await _context.Areas
+                .OrderBy(a => a.Name)
+                .AsNoTracking()
+                .ToListAsync(cancellationToken);
+        }
+
+        public async Task<List<Region>> GetRegionsByAreaAsync(int areaId, CancellationToken cancellationToken = default)
+        {
+            return await _context.Regions
+                .Where(r => r.AreaId == areaId)
+                .OrderBy(r => r.Name)
+                .AsNoTracking()
+                .ToListAsync(cancellationToken);
         }
 
         public async Task<User?> GetByPhoneNumberAsync(string phoneNumber, CancellationToken cancellationToken = default)
@@ -54,6 +102,25 @@ namespace ManageUsers.Infrastructure.Repositories
         public async Task<User> GetUserByIdAsync(string userId, CancellationToken ct = default)
         {
             return await _context.Users.FirstOrDefaultAsync(u => u.Id.ToString() == userId, ct);
+        }
+
+        public async Task<User?> GetUserByIdWithRolesAsync(string userId, CancellationToken ct = default)
+        {
+            return await _context.Users
+                .Include(u => u.UserRoles)
+                .ThenInclude(ur => ur.Role)
+                .Include(u => u.Organization)
+                .Include(u => u.Area)
+                .Include(u => u.Region)
+                .FirstOrDefaultAsync(u => u.Id.ToString() == userId, ct);
+        }
+
+        public async Task<List<string>> GetUserRoleIdsAsync(int userId, CancellationToken ct = default)
+        {
+            return await _context.UserRoles
+                .Where(ur => ur.UserId == userId)
+                .Select(ur => ur.RoleId.ToString())
+                .ToListAsync(ct);
         }
 
         public async Task<User?> GetUserByNationalCodeAsync(string nationalCode, CancellationToken cancellationToken = default)

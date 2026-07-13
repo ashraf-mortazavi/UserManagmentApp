@@ -1,4 +1,5 @@
-﻿using ManageUsers.Application.DTOs;
+using ManageUsers.Application.DTOs;
+using ManageUsers.Domain;
 using MediatR;
 
 namespace ManageUsers.Application.Commands
@@ -8,6 +9,7 @@ namespace ManageUsers.Application.Commands
         string UserName, string Password,string? PersonalCode,
         string? Position, string? Description,
         bool Enabled, DateTime CreatedAt,
+        AccessLevel AccessLevel,
         int? OrganizationId, int? AreaId, int? RegionId,
         string CreatedById, List<string> UserRoleIds
         ) :  IRequest<CreateUserResponse>

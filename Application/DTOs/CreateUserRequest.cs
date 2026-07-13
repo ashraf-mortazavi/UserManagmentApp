@@ -1,5 +1,6 @@
-﻿
+
 using System.ComponentModel;
+using ManageUsers.Domain;
 
 namespace ManageUsers.Application.DTOs
 {
@@ -28,6 +29,8 @@ namespace ManageUsers.Application.DTOs
         public string? Position {  get; set; }
         [Description("توضیحات")] 
         public string? Description { get; set; } 
+        [Description("سطح دسترسی")] 
+        public AccessLevel AccessLevel { get; set; } = AccessLevel.Setad;
         [Description("شناسه سازمان")] 
         public int? OrganizationId { get; set; }
         [Description("منطقه")] 

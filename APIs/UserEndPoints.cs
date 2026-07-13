@@ -1,7 +1,8 @@
-﻿using Azure.Core;
+using Azure.Core;
 using ManageUsers.Application.Commands;
 using ManageUsers.Application.DTOs;
 using ManageUsers.Application.Queries;
+using ManageUsers.Domain;
 using ManageUsers.Extentions;
 using MediatR;
 using Microsoft.AspNetCore.Http.HttpResults;
@@ -51,7 +52,6 @@ namespace ManageUsers.Controllers
                  .Validator<ChangeUserPasswordRequest>();
 
             group.MapPut("/forgotpassword", ForgotPassword)
-                .RequireAuthorization()
                 .WithDisplayName("فراموشی رمز عبور")
                 .WithSummary("ForgotPassword user with email")
                 .Validator<ForgotPasswordRequest>();
@@ -85,6 +85,27 @@ namespace ManageUsers.Controllers
                 .RequireAuthorization()
                 .WithDisplayName("دریافت کاربران")
                 .WithSummary("Get All Users");
+
+            group.MapGet("/{id}", GetUserById)
+                .RequireAuthorization()
+                .WithDisplayName("دریافت کاربر")
+                .WithSummary("Get user by ID");
+
+            group.MapPut("/{id}", UpdateUser)
+                .RequireAuthorization()
+                .WithDisplayName("ویرایش کاربر")
+                .WithSummary("Update user")
+                .Validator<UpdateUserRequest>();
+
+            group.MapGet("/areas", GetAreas)
+                .RequireAuthorization()
+                .WithDisplayName("دریافت مناطق")
+                .WithSummary("Get all areas");
+
+            group.MapGet("/areas/{areaId:int}/zones", GetZonesByArea)
+                .RequireAuthorization()
+                .WithDisplayName("دریافت نواحی منطقه")
+                .WithSummary("Get zones for an area");
         }
 
         public static async Task<Results<Ok<APIResponse<CreateUserResponse>>, BadRequest<APIResponse<CreateUserResponse>>>> CreateUser(
@@ -109,6 +130,7 @@ namespace ManageUsers.Controllers
                    PostalCode: request.PostalCode,
                    Position: request.Position,
                    PersonalCode: request.PersonalCode,
+                   AccessLevel: request.AccessLevel,
                    OrganizationId: request.OrganizationId,
                    AreaId: request.AreaId,
                    RegionId: request.RegionId,
@@ -435,13 +457,39 @@ namespace ManageUsers.Controllers
         public static async Task<Results<Ok<APIResponse<GetUsersResponse>>, BadRequest<APIResponse<GetUsersResponse>>>> GetUsers(
             [AsParameters] GetUsersQuery query,
             IMediator mediator,
+            ClaimsPrincipal claimsPrincipal,
             CancellationToken ct)
         {
             APIResponse<GetUsersResponse> response = new();
 
             try
             {
-                GetUsersResponse getUsersResponse = await mediator.Send(query, ct);
+                var callerUserId = claimsPrincipal.FindFirst("nameid")?.Value
+                    ?? claimsPrincipal.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+                var enrichedQuery = query with
+                {
+                    CallerAccessLevel = AccessLevel.Setad,
+                    CallerAreaId = null,
+                    CallerRegionId = null
+                };
+
+                if (!string.IsNullOrEmpty(callerUserId))
+                {
+                    var getUserQuery = new GetUserByIdQuery(callerUserId);
+                    var callerUser = await mediator.Send(getUserQuery, ct);
+                    if (callerUser != null && string.IsNullOrEmpty(callerUser.FailedResult))
+                    {
+                        enrichedQuery = query with
+                        {
+                            CallerAccessLevel = callerUser.AccessLevel,
+                            CallerAreaId = callerUser.AreaId,
+                            CallerRegionId = callerUser.RegionId
+                        };
+                    }
+                }
+
+                GetUsersResponse getUsersResponse = await mediator.Send(enrichedQuery, ct);
 
                 if (!string.IsNullOrEmpty(getUsersResponse.FailedResult))
                 {
@@ -456,6 +504,123 @@ namespace ManageUsers.Controllers
                 return TypedResults.Ok(response);
             }
             catch (Exception)
+            {
+                throw;
+            }
+        }
+
+        private static async Task<Results<Ok<APIResponse<GetUserByIdResponse>>, BadRequest<APIResponse<GetUserByIdResponse>>>> GetUserById(
+            [FromRoute] string id,
+            IMediator mediator,
+            CancellationToken ct)
+        {
+            APIResponse<GetUserByIdResponse> response = new();
+
+            try
+            {
+                var query = new GetUserByIdQuery(id);
+                var result = await mediator.Send(query, ct);
+
+                if (!string.IsNullOrEmpty(result.FailedResult))
+                {
+                    response.ErrorMessage = [result.FailedResult];
+                    response.IsSuccess = false;
+                    response.StatusCode = HttpStatusCode.BadRequest;
+                    return TypedResults.BadRequest(response);
+                }
+
+                response.StatusCode = HttpStatusCode.OK;
+                response.Result.Data = result;
+                return TypedResults.Ok(response);
+            }
+            catch
+            {
+                throw;
+            }
+        }
+
+        private static async Task<Results<Ok<APIResponse<UpdateUserResponse>>, BadRequest<APIResponse<UpdateUserResponse>>>> UpdateUser(
+            [FromRoute] string id,
+            [FromBody] UpdateUserRequest request,
+            IMediator mediator,
+            CancellationToken ct)
+        {
+            APIResponse<UpdateUserResponse> response = new();
+
+            try
+            {
+                var command = new UpdateUserCommand(
+                    UserId: id,
+                    FirstName: request.FirstName,
+                    LastName: request.LastName,
+                    PhoneNumber: request.PhoneNumber,
+                    NationalCode: request.NationalCode,
+                    Email: request.Email,
+                    PostalCode: request.PostalCode,
+                    PersonalCode: request.PersonalCode,
+                    Position: request.Position,
+                    Description: request.Description,
+                    Enabled: request.Enabled,
+                    AccessLevel: request.AccessLevel,
+                    OrganizationId: request.OrganizationId,
+                    AreaId: request.AreaId,
+                    RegionId: request.RegionId,
+                    UserRoleIds: request.UserRoleIds);
+
+                var result = await mediator.Send(command, ct);
+
+                if (!string.IsNullOrEmpty(result.FailedResult))
+                {
+                    response.ErrorMessage = [result.FailedResult];
+                    response.IsSuccess = false;
+                    response.StatusCode = HttpStatusCode.BadRequest;
+                    return TypedResults.BadRequest(response);
+                }
+
+                response.StatusCode = HttpStatusCode.OK;
+                response.Result.Data = result;
+                return TypedResults.Ok(response);
+            }
+            catch
+            {
+                throw;
+            }
+        }
+
+        private static async Task<Results<Ok<APIResponse<GetAreasResponse>>, BadRequest<APIResponse<GetAreasResponse>>>> GetAreas(
+            ISender sender,
+            CancellationToken ct)
+        {
+            APIResponse<GetAreasResponse> response = new();
+
+            try
+            {
+                var result = await sender.Send(new GetAreasQuery(), ct);
+                response.StatusCode = HttpStatusCode.OK;
+                response.Result.Data = result;
+                return TypedResults.Ok(response);
+            }
+            catch
+            {
+                throw;
+            }
+        }
+
+        private static async Task<Results<Ok<APIResponse<GetRegionsByAreaResponse>>, BadRequest<APIResponse<GetRegionsByAreaResponse>>>> GetZonesByArea(
+            [FromRoute] int areaId,
+            ISender sender,
+            CancellationToken ct)
+        {
+            APIResponse<GetRegionsByAreaResponse> response = new();
+
+            try
+            {
+                var result = await sender.Send(new GetRegionsByAreaQuery(areaId), ct);
+                response.StatusCode = HttpStatusCode.OK;
+                response.Result.Data = result;
+                return TypedResults.Ok(response);
+            }
+            catch
             {
                 throw;
             }
