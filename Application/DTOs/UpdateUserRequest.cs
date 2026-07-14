@@ -27,8 +27,6 @@ namespace ManageUsers.Application.DTOs
         public bool Enabled { get; set; }
         [Description("سطح دسترسی")]
         public AccessLevel AccessLevel { get; set; } = AccessLevel.Setad;
-        [Description("شناسه سازمان")]
-        public int? OrganizationId { get; set; }
         [Description("منطقه")]
         public int? AreaId { get; set; }
         [Description("ناحیه")]

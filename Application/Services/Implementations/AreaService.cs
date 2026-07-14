@@ -11,5 +11,10 @@ namespace ManageUsers.Application.Services.Implementations
         {
             return await _unitOfWork.Areas.GetAreaAsync(areaId, cancellationToken);
         }
+
+        public async Task<List<Area>> GetAreasByZone(int areaId, CancellationToken ct = default)
+        {
+            return await _unitOfWork.Areas.GetAreasByZoneAsync(areaId, ct);
+        }
     }
 }

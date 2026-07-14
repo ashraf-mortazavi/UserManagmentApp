@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace ManageUsers.Infrastructure.Repositories
 {
-    public class RegionRepository : IRegionRepository
+    public class RegionRepository : IZoneRepository
     {
         private readonly AppDbContext _appDbContext;
 
@@ -14,7 +14,12 @@ namespace ManageUsers.Infrastructure.Repositories
             _appDbContext = appDbContext;
         }
 
-        public async Task<Region> GetRegionAsync(int regionId, CancellationToken cancellationToken = default)
+        public async Task<List<Region>> GetAllZonesAsync(CancellationToken cancellationToken = default)
+        {
+            return await _appDbContext.Regions.ToListAsync(cancellationToken: cancellationToken);
+        }
+
+        public async Task<Region> GetZoneAsync(int regionId, CancellationToken cancellationToken = default)
         {
             return await _appDbContext.Regions.FirstOrDefaultAsync(o => o.Id == regionId, cancellationToken: cancellationToken);
 

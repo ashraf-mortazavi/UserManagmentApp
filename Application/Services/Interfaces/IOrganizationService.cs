@@ -5,6 +5,6 @@ namespace ManageUsers.Application.Services.Interfaces
 {
     public interface IOrganizationService
     {
-        Task<Organization> GetOrganizationAsync(int organizationId, CancellationToken cancellationToken = default);
+        Task<Organization?> GetOrganizationAsync(int organizationId, CancellationToken cancellationToken = default);
     }
 }

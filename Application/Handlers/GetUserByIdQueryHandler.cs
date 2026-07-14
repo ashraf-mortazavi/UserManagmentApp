@@ -1,6 +1,7 @@
 using ManageUsers.Application.DTOs;
 using ManageUsers.Application.Queries;
 using ManageUsers.Application.Services.Interfaces;
+using ManageUsers.Domain;
 using MediatR;
 
 namespace ManageUsers.Application.Handlers
@@ -8,10 +9,17 @@ namespace ManageUsers.Application.Handlers
     public class GetUserByIdQueryHandler : IRequestHandler<GetUserByIdQuery, GetUserByIdResponse>
     {
         private readonly IUserService _userService;
+        private readonly IOrganizationService _organizationService;
+        private readonly IAreaService _areaService;
+        private readonly IRegionService _regionService;
 
-        public GetUserByIdQueryHandler(IUserService userService)
+        public GetUserByIdQueryHandler(IUserService userService, IOrganizationService organizationService, IAreaService areaService, IRegionService regionService)
         {
             _userService = userService;
+            _organizationService = organizationService;
+            _areaService = areaService;
+            _regionService = regionService;
+
         }
 
         public async Task<GetUserByIdResponse> Handle(GetUserByIdQuery request, CancellationToken ct)
@@ -24,6 +32,21 @@ namespace ManageUsers.Application.Handlers
             {
                 response.FailedResult = "کاربر یافت نشد!";
                 return response;
+            }
+            Organization? organization = null;
+            if (user.OrganizationId.HasValue)
+            { 
+                organization = await _organizationService.GetOrganizationAsync(user.OrganizationId.Value, ct);
+            }
+            Area? area = null;
+            if (user.AreaId.HasValue)
+            {
+                area = await _areaService.GetAreaAsync(user.AreaId.Value, ct);
+            }
+            Region? region = null;
+            if (user.RegionId.HasValue)
+            {
+                region = await _regionService.GetRegionAsync(user.RegionId.Value, ct);
             }
 
             var roleIds = await _userService.GetUserRoleIdsAsync(user.Id, ct);
@@ -38,11 +61,11 @@ namespace ManageUsers.Application.Handlers
             response.PostalCode = user.PostalCode;
             response.PersonalCode = user.PersonalCode;
             response.Position = user.Position;
-            response.Description = user.Description;
             response.Enabled = user.Enabled;
-            response.OrganizationId = user.OrganizationId;
-            response.AreaId = user.AreaId;
-            response.RegionId = user.RegionId;
+            response.AreaName = area is null ? string.Empty : area.Name;
+            response.AreaId = area is null ? 0 : area.Id;
+            response.RegionName = region is null ? string.Empty : region.Name;
+            response.RegionId = region is null ? 0 : region.Id;
             response.UserRoleIds = roleIds;
             response.CreatedAt = user.CreatedAt;
             response.UpdatedAt = user.UpdatedAt;

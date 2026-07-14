@@ -14,12 +14,12 @@ namespace ManageUsers.Application.DTOs
         public string? PostalCode { get; set; }
         public string? PersonalCode { get; set; }
         public string? Position { get; set; }
-        public string? Description { get; set; }
         public bool Enabled { get; set; }
         public AccessLevel AccessLevel { get; set; } = AccessLevel.Setad;
-        public int? OrganizationId { get; set; }
         public int? AreaId { get; set; }
         public int? RegionId { get; set; }
+        public string? AreaName { get; set; }
+        public string? RegionName { get; set; }
         public List<string> UserRoleIds { get; set; } = new();
         public DateTime CreatedAt { get; set; }
         public DateTime? UpdatedAt { get; set; }

@@ -1,6 +1,7 @@
 
 using System.ComponentModel;
 using ManageUsers.Domain;
+using Microsoft.AspNetCore.Http;
 
 namespace ManageUsers.Application.DTOs
 {
@@ -8,38 +9,33 @@ namespace ManageUsers.Application.DTOs
     {
         [Description("نام")]
         public string FirstName { get; set; }
-        [Description("نام خانوادگی")] 
+        [Description("نام خانوادگی")]
         public string LastName { get; set; }
-        [Description("شماره همراه")] 
+        [Description("شماره همراه")]
         public string PhoneNumber { get; set; }
-
-        [Description("کد ملی")] 
+        [Description("کد ملی")]
         public string NationalCode  { get; set; }
         [Description("ایمیل")]
         public string? Email {  get; set; }
-        [Description("کد پستی")] 
-        public string? PostalCode { get; set; } 
-        [Description("نام کاربری")] 
+        [Description("کد پستی")]
+        public string? PostalCode { get; set; }
+        [Description("نام کاربری")]
         public string UserName { get; set; }
-        [Description("رمز عبور")] 
+        [Description("رمز عبور")]
         public string Password { get; set; }
         [Description("کد پرسنلی")]
         public string? PersonalCode { get; set; }
-        [Description("موقعیت")] 
-        public string? Position {  get; set; }
-        [Description("توضیحات")] 
-        public string? Description { get; set; } 
-        [Description("سطح دسترسی")] 
+        [Description("سطح دسترسی")]
         public AccessLevel AccessLevel { get; set; } = AccessLevel.Setad;
-        [Description("شناسه سازمان")] 
-        public int? OrganizationId { get; set; }
-        [Description("منطقه")] 
-        public int? AreaId {get; set; }
-        [Description("ناحیه")] 
-        public int? RegionId { get; set; }
-        [Description("شناسه نقش های کاربر")] 
+        [Description("منطقه")]
+        public int? ZoneId {get; set; }
+        [Description("ناحیه")]
+        public int? AreaId { get; set; }
+        [Description("شناسه نقش های کاربر")]
         public List<string> UserRoleIds { get; set; }
-    
+        [Description("عکس پروفایل")]
+        public IFormFile? Avatar { get; set; }
+
     }
 
     public sealed class CreateUserResponse : BaseResponse

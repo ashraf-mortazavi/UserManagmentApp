@@ -5,19 +5,19 @@ using MediatR;
 
 namespace ManageUsers.Application.Handlers
 {
-    public class GetAreasQueryHandler : IRequestHandler<GetAreasQuery, GetAreasResponse>
+    public class GetZonesQueryHandler : IRequestHandler<GetZonesQuery, GetZonesResponse>
     {
         private readonly IUserService _userService;
 
-        public GetAreasQueryHandler(IUserService userService)
+        public GetZonesQueryHandler(IUserService userService)
         {
             _userService = userService;
         }
 
-        public async Task<GetAreasResponse> Handle(GetAreasQuery request, CancellationToken ct)
+        public async Task<GetZonesResponse> Handle(GetZonesQuery request, CancellationToken ct)
         {
-            var response = new GetAreasResponse();
-            var areas = await _userService.GetAllAreasAsync(ct);
+            var response = new GetZonesResponse();
+            var areas = await _userService.GetAllZonesAsync(ct);
             response.Areas = areas.Select(a => new AreaDto(a.Id, a.Name)).ToList();
             return response;
         }

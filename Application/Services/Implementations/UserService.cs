@@ -241,7 +241,7 @@ public class UserService(
         return await _unitOfWork.Users.GetTotalCountAsync(searchTerm ?? string.Empty, callerAccessLevel, callerAreaId, callerRegionId, ct);
     }
 
-    public async Task<List<Area>> GetAllAreasAsync(CancellationToken ct = default)
+    public async Task<List<Area>> GetAllZonesAsync(CancellationToken ct = default)
     {
         return await _unitOfWork.Users.GetAllAreasAsync(ct);
     }

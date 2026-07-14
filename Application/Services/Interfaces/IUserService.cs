@@ -34,7 +34,7 @@ namespace ManageUsers.Application.Services.Interfaces
 
         Task<int> GetTotalCountAsync(string? searchTerm, AccessLevel callerAccessLevel, int? callerAreaId, int? callerRegionId, CancellationToken ct);
 
-        Task<List<Area>> GetAllAreasAsync(CancellationToken ct = default);
+        Task<List<Area>> GetAllZonesAsync(CancellationToken ct = default);
         Task<List<Region>> GetRegionsByAreaAsync(int areaId, CancellationToken ct = default);
 
     }

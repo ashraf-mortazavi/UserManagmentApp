@@ -1,6 +1,6 @@
 namespace ManageUsers.Application.DTOs
 {
-    public class GetAreasResponse : BaseResponse
+    public class GetZonesResponse : BaseResponse
     {
         public List<AreaDto> Areas { get; set; } = new();
     }

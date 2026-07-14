@@ -13,6 +13,7 @@ public sealed class User : IdentityUser<int>
     public string? PersonalCode { get; set; }
     public string? Position { get; set; }
     public string? Description { get; set; }
+    public string? AvatarUrl { get; set; }
     public bool Enabled { get; set; } = true;
     public AccessLevel AccessLevel { get; set; } = AccessLevel.Setad;
     public string? CreatedById { get; set; }

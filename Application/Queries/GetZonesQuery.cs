@@ -3,5 +3,5 @@ using MediatR;
 
 namespace ManageUsers.Application.Queries
 {
-    public record GetAreasQuery : IRequest<GetAreasResponse>;
+    public record GetZonesQuery : IRequest<GetZonesResponse>;
 }

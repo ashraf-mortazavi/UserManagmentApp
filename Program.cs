@@ -93,7 +93,7 @@ builder.Services.AddScoped<IPermissionRepository, PermissionRepository>();
 builder.Services.AddScoped<IPermissionService, PermissionService>();
 builder.Services.AddScoped<IOrganizationRepository, OrganizationRepository>();
 builder.Services.AddScoped<IAreaRepository, AreaRepository>();
-builder.Services.AddScoped<IRegionRepository, RegionRepository>();
+builder.Services.AddScoped<IZoneRepository, RegionRepository>();
 builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<ISmsService, SMSServicecs>();
 builder.Services.AddTransient<IEmailSender, NoOpEmailSender>();

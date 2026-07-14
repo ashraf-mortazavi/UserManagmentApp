@@ -97,12 +97,11 @@ namespace ManageUsers.Controllers
                 .WithSummary("Update user")
                 .Validator<UpdateUserRequest>();
 
-            group.MapGet("/areas", GetAreas)
-                .RequireAuthorization()
+            group.MapGet("/zones", GetZones)
                 .WithDisplayName("دریافت مناطق")
-                .WithSummary("Get all areas");
+                .WithSummary("Get all zones");
 
-            group.MapGet("/areas/{areaId:int}/zones", GetZonesByArea)
+            group.MapGet("/areas/{zoneId:int}/zones", GetAreasByZone)
                 .RequireAuthorization()
                 .WithDisplayName("دریافت نواحی منطقه")
                 .WithSummary("Get zones for an area");
@@ -559,10 +558,8 @@ namespace ManageUsers.Controllers
                     PostalCode: request.PostalCode,
                     PersonalCode: request.PersonalCode,
                     Position: request.Position,
-                    Description: request.Description,
                     Enabled: request.Enabled,
                     AccessLevel: request.AccessLevel,
-                    OrganizationId: request.OrganizationId,
                     AreaId: request.AreaId,
                     RegionId: request.RegionId,
                     UserRoleIds: request.UserRoleIds);
@@ -587,15 +584,15 @@ namespace ManageUsers.Controllers
             }
         }
 
-        private static async Task<Results<Ok<APIResponse<GetAreasResponse>>, BadRequest<APIResponse<GetAreasResponse>>>> GetAreas(
+        private static async Task<Results<Ok<APIResponse<GetZonesResponse>>, BadRequest<APIResponse<GetZonesResponse>>>> GetZones(
             ISender sender,
             CancellationToken ct)
         {
-            APIResponse<GetAreasResponse> response = new();
+            APIResponse<GetZonesResponse> response = new();
 
             try
             {
-                var result = await sender.Send(new GetAreasQuery(), ct);
+                var result = await sender.Send(new GetZonesQuery(), ct);
                 response.StatusCode = HttpStatusCode.OK;
                 response.Result.Data = result;
                 return TypedResults.Ok(response);
@@ -606,16 +603,16 @@ namespace ManageUsers.Controllers
             }
         }
 
-        private static async Task<Results<Ok<APIResponse<GetRegionsByAreaResponse>>, BadRequest<APIResponse<GetRegionsByAreaResponse>>>> GetZonesByArea(
-            [FromRoute] int areaId,
+        private static async Task<Results<Ok<APIResponse<GetAreasByZoneResponse>>, BadRequest<APIResponse<GetAreasByZoneResponse>>>> GetAreasByZone(
+            [FromRoute] int zoneId,
             ISender sender,
             CancellationToken ct)
         {
-            APIResponse<GetRegionsByAreaResponse> response = new();
+            APIResponse<GetAreasByZoneResponse> response = new();
 
             try
             {
-                var result = await sender.Send(new GetRegionsByAreaQuery(areaId), ct);
+                var result = await sender.Send(new GetAreasByZoneQuery(zoneId), ct);
                 response.StatusCode = HttpStatusCode.OK;
                 response.Result.Data = result;
                 return TypedResults.Ok(response);

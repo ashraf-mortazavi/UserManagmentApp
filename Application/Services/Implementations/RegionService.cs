@@ -11,7 +11,7 @@ namespace ManageUsers.Application.Services.Implementations
 
         public async Task<Region> GetRegionAsync(int regionId, CancellationToken cancellationToken = default)
         {
-            return await _unitOfWork.Regions.GetRegionAsync(regionId, cancellationToken);
+            return await _unitOfWork.Regions.GetZoneAsync(regionId, cancellationToken);
         }
     }
 }

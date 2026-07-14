@@ -14,10 +14,8 @@ namespace ManageUsers.Application.Commands
         string? PostalCode,
         string? PersonalCode,
         string? Position,
-        string? Description,
         bool Enabled,
         AccessLevel AccessLevel,
-        int? OrganizationId,
         int? AreaId,
         int? RegionId,
         List<string> UserRoleIds

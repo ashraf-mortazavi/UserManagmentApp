@@ -80,13 +80,13 @@ namespace ManageUsers.Application.Handlers
                 }
             }
 
-            if (request.AccessLevel == AccessLevel.Area && !request.AreaId.HasValue)
+            if (request.AccessLevel == AccessLevel.Zone && !request.RegionId.HasValue)
             {
                 response.FailedResult = "برای سطح دسترسی منطقه، انتخاب منطقه الزامی است!";
                 return response;
             }
 
-            if (request.AccessLevel == AccessLevel.Zone && (!request.AreaId.HasValue || !request.RegionId.HasValue))
+            if (request.AccessLevel == AccessLevel.Area && (!request.AreaId.HasValue || !request.RegionId.HasValue))
             {
                 response.FailedResult = "برای سطح دسترسی ناحیه، انتخاب منطقه و ناحیه الزامی است!";
                 return response;
@@ -106,10 +106,8 @@ namespace ManageUsers.Application.Handlers
             user.PostalCode = request.PostalCode;
             user.PersonalCode = request.PersonalCode;
             user.Position = request.Position;
-            user.Description = request.Description;
             user.Enabled = request.Enabled;
             user.AccessLevel = request.AccessLevel;
-            user.OrganizationId = request.OrganizationId;
             user.AreaId = request.AreaId;
             user.RegionId = request.RegionId;
             user.UpdatedAt = DateTime.UtcNow;
@@ -123,7 +121,6 @@ namespace ManageUsers.Application.Handlers
                 return response;
             }
 
-            await _unitOfWork.SaveChangesAsync(ct);
 
             response.Id = user.Id.ToString();
             return response;

@@ -15,7 +15,7 @@ namespace ManageUsers.Infrastructure.Persistence
             IRolePermissionRepository rolePermissions,
             IOrganizationRepository organizations,
             IAreaRepository areas,
-            IRegionRepository regions,
+            IZoneRepository regions,
             IPermissionRepository permissions)
         {
             _context = context;
@@ -41,7 +41,7 @@ namespace ManageUsers.Infrastructure.Persistence
 
         public IAreaRepository Areas { get; }
 
-        public IRegionRepository Regions { get; }
+        public IZoneRepository Regions { get; }
 
         public IPermissionRepository Permissions { get; }
 

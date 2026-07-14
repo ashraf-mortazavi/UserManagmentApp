@@ -69,22 +69,6 @@ namespace ManageUsers.Infrastructure.Repositories
             };
         }
 
-        public async Task<List<Area>> GetAllAreasAsync(CancellationToken cancellationToken = default)
-        {
-            return await _context.Areas
-                .OrderBy(a => a.Name)
-                .AsNoTracking()
-                .ToListAsync(cancellationToken);
-        }
-
-        public async Task<List<Region>> GetRegionsByAreaAsync(int areaId, CancellationToken cancellationToken = default)
-        {
-            return await _context.Regions
-                .Where(r => r.AreaId == areaId)
-                .OrderBy(r => r.Name)
-                .AsNoTracking()
-                .ToListAsync(cancellationToken);
-        }
 
         public async Task<User?> GetByPhoneNumberAsync(string phoneNumber, CancellationToken cancellationToken = default)
         {
