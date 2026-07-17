@@ -17,7 +17,7 @@ namespace ManageUsers.Infrastructure.Persistence
         public DbSet<Menu> Menus => Set<Menu>();
         public DbSet<Organization> Organizations => Set<Organization>();
         public DbSet<Area> Areas => Set<Area>();
-        public DbSet<Region> Regions => Set<Region>();
+        public DbSet<Zone> Zones => Set<Zone>();
 
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)

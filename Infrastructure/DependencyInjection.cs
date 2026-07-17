@@ -1,8 +1,10 @@
-﻿using ManageUsers.Application;
+using ManageUsers.Application;
 using ManageUsers.Application.Common;
 using ManageUsers.Application.Interfaces;
+using ManageUsers.Application.Services.Interfaces;
 using ManageUsers.Infrastructure.Persistence;
 using ManageUsers.Infrastructure.Repositories;
+using ManageUsers.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 
 namespace ManageUsers.Infrastructure
@@ -18,6 +20,7 @@ namespace ManageUsers.Infrastructure
 
             services.AddScoped<IUserRepository, UserRepository>();
             services.AddScoped<IUnitOfWork, UnitOfWork>();
+            services.AddScoped<IFileService, FileService>();
 
             return services;
         }

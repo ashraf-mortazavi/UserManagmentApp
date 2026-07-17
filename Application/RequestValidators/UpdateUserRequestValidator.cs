@@ -40,11 +40,11 @@ namespace ManageUsers.Application.RequestValidators
                 .MaximumLength(StaticDetail.PostalCodeLength)
                 .WithMessage(nameof(UpdateUserRequest.PostalCode).GetInvalidValueErrorMessage(typeof(UpdateUserRequest)));
 
-            RuleFor(o => o.UserRoleIds)
+            RuleFor(o => o.RoleId)
                 .NotNull()
-                .WithMessage(nameof(UpdateUserRequest.UserRoleIds).GetNullOrEmptyErrorMessage(typeof(UpdateUserRequest)))
+                .WithMessage(nameof(UpdateUserRequest.RoleId).GetNullOrEmptyErrorMessage(typeof(UpdateUserRequest)))
                 .NotEmpty()
-                .WithMessage(nameof(UpdateUserRequest.UserRoleIds).GetNullOrEmptyErrorMessage(typeof(UpdateUserRequest)));
+                .WithMessage(nameof(UpdateUserRequest.RoleId).GetNullOrEmptyErrorMessage(typeof(UpdateUserRequest)));
 
             RuleFor(x => x.AreaId)
                 .NotNull()
@@ -77,6 +77,11 @@ namespace ManageUsers.Application.RequestValidators
                 .Null()
                 .When(x => x.AccessLevel != AccessLevel.Zone)
                 .WithMessage("ناحیه فقط برای سطح دسترسی ناحیه قابل انتخاب است.");
+
+            RuleFor(x => x.BirthDate)
+                .LessThanOrEqualTo(DateTime.UtcNow)
+                .When(x => x.BirthDate.HasValue)
+                .WithMessage("تاریخ تولد نمی‌تواند در آینده باشد.");
         }
     }
 }

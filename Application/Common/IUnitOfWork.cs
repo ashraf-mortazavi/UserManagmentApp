@@ -10,7 +10,7 @@ public interface IUnitOfWork
     IRolePermissionRepository RolePermissions { get; }
     IOrganizationRepository Organizations { get; }
     IAreaRepository Areas { get; }
-    IZoneRepository Regions { get; }
+    IZoneRepository Zones { get; }
     IPermissionRepository Permissions { get; }
 
     Task SaveChangesAsync(CancellationToken cancellationToken = default);

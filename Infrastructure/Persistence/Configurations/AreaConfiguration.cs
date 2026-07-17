@@ -18,8 +18,16 @@ public sealed class AreaConfiguration : IEntityTypeConfiguration<Area>
         builder.Property(x => x.IsDeleted).HasDefaultValue(false);
         builder.HasQueryFilter(x => !x.IsDeleted);
 
-        builder.HasIndex(x => x.Name)
+
+        builder.HasOne(x => x.Zone)
+          .WithMany(x => x.Areas)
+          .HasForeignKey(x => x.ZoneId)
+          .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasIndex(x => new { x.Id, x.Name })
             .IsUnique()
             .HasFilter("[IsDeleted] = 0");
+
+ 
     }
 }

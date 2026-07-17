@@ -7,17 +7,17 @@ namespace ManageUsers.Application.Handlers
 {
     public class GetZonesQueryHandler : IRequestHandler<GetZonesQuery, GetZonesResponse>
     {
-        private readonly IUserService _userService;
+        private readonly IZoneService _zoneService;
 
-        public GetZonesQueryHandler(IUserService userService)
+        public GetZonesQueryHandler(IZoneService zoneService)
         {
-            _userService = userService;
+            _zoneService = zoneService;
         }
 
         public async Task<GetZonesResponse> Handle(GetZonesQuery request, CancellationToken ct)
         {
             var response = new GetZonesResponse();
-            var areas = await _userService.GetAllZonesAsync(ct);
+            var areas = await _zoneService.GetAllZonesAsync(ct);
             response.Areas = areas.Select(a => new AreaDto(a.Id, a.Name)).ToList();
             return response;
         }

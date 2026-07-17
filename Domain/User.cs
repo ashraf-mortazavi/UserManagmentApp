@@ -11,8 +11,6 @@ public sealed class User : IdentityUser<int>
     public string NationalCode { get; set; } = null!;
     public string? PostalCode { get; set; }
     public string? PersonalCode { get; set; }
-    public string? Position { get; set; }
-    public string? Description { get; set; }
     public string? AvatarUrl { get; set; }
     public bool Enabled { get; set; } = true;
     public AccessLevel AccessLevel { get; set; } = AccessLevel.Setad;
@@ -24,6 +22,7 @@ public sealed class User : IdentityUser<int>
 
     public bool IsFirstLogin { get; set; } = true;
     public DateTime? PasswordExpiresAt { get; set; }
+    public DateTime? BirthDate { get; set; }
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime? UpdatedAt { get; set; }
@@ -35,8 +34,8 @@ public sealed class User : IdentityUser<int>
     public int? AreaId { get; set; }
     public Area? Area { get; set; }
 
-    public int? RegionId { get; set; }
-    public Region? Region { get; set; }
+    public int? ZonId { get; set; }
+    public Zone? Zone { get; set; }
 
     public ApplicationUserToken? ApplicationUserToken { get; set; }
     public ICollection<UserRole> UserRoles { get; set; } = new List<UserRole>();

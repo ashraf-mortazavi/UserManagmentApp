@@ -62,6 +62,11 @@ namespace ManageUsers.Controllers
                 .WithSummary("Reset user password")
                 .Validator<ResetPasswordRequest>();
 
+            group.MapPost("/{id}/admin-reset-password", AdminResetPassword)
+                .RequireAuthorization()
+                .WithDisplayName("بازنشانی رمز عبور توسط ادمین")
+                .WithSummary("Admin generates a new random password for a user");
+
             group.MapGet("/{roleId:int}/permissions", GetRolePermissions)
                 .RequireAuthorization()
                 .WithDisplayName("دریافت دسترسی های نقش مشخص")
@@ -105,10 +110,15 @@ namespace ManageUsers.Controllers
                 .RequireAuthorization()
                 .WithDisplayName("دریافت نواحی منطقه")
                 .WithSummary("Get zones for an area");
+
+            group.MapGet("/profile", GetProfile)
+                .RequireAuthorization()
+                .WithDisplayName("دریافت پروفایل کاربر")
+                .WithSummary("Get current user profile info");
         }
 
         public static async Task<Results<Ok<APIResponse<CreateUserResponse>>, BadRequest<APIResponse<CreateUserResponse>>>> CreateUser(
-            [FromBody] CreateUserRequest request,
+            [FromForm] CreateUserRequest request,
             IMediator mediator,
             ClaimsPrincipal claimsPrincipal,
             CancellationToken ct)
@@ -127,19 +137,18 @@ namespace ManageUsers.Controllers
                    NationalCode: request.NationalCode,
                    Email: request.Email,
                    PostalCode: request.PostalCode,
-                   Position: request.Position,
                    PersonalCode: request.PersonalCode,
                    AccessLevel: request.AccessLevel,
-                   OrganizationId: request.OrganizationId,
                    AreaId: request.AreaId,
-                   RegionId: request.RegionId,
+                   ZoneId: request.ZoneId,
                    UserName: request.UserName,
                    Password: request.Password,
-                   Description: request.Description,
                    CreatedById: userId,
-                   UserRoleIds: request.UserRoleIds,
-                   Enabled: true,
-                   CreatedAt: DateTime.UtcNow);
+                   UserRoleId: request.UserRoleId,
+                   Enabled: false,
+                   CreatedAt: DateTime.UtcNow,
+                   BirthDate: request.BirthDate,
+                   Avatar: request.Avatar);
 
                 CreateUserResponse createUserResponse = await mediator.Send(command, ct);
                 if (!string.IsNullOrEmpty(createUserResponse.FailedResult))
@@ -324,6 +333,36 @@ namespace ManageUsers.Controllers
             }
         }
 
+        private static async Task<Results<Ok<APIResponse<AdminResetPasswordResponse>>, BadRequest<APIResponse<AdminResetPasswordResponse>>>> AdminResetPassword(
+            [FromRoute] string id,
+            ISender sender,
+            CancellationToken ct)
+        {
+            APIResponse<AdminResetPasswordResponse> response = new();
+
+            try
+            {
+                var command = new AdminResetPasswordCommand(id);
+                AdminResetPasswordResponse result = await sender.Send(command, ct);
+
+                if (!string.IsNullOrEmpty(result.FailedResult))
+                {
+                    response.ErrorMessage = [result.FailedResult];
+                    response.IsSuccess = false;
+                    response.StatusCode = HttpStatusCode.BadRequest;
+                    return TypedResults.BadRequest(response);
+                }
+
+                response.StatusCode = HttpStatusCode.OK;
+                response.Result.Data = result;
+                return TypedResults.Ok(response);
+            }
+            catch
+            {
+                throw;
+            }
+        }
+
         private static async Task<Results<Ok<APIResponseList<List<GetRolePermissionsResponse>>>, NotFound<APIResponseList<List<GetRolePermissionsResponse>>>>> GetRolePermissions(
             [FromRoute] string roleId,
             ISender sender,
@@ -463,32 +502,24 @@ namespace ManageUsers.Controllers
 
             try
             {
-                var callerUserId = claimsPrincipal.FindFirst("nameid")?.Value
+                var userId = claimsPrincipal.FindFirst("nameid")?.Value
                     ?? claimsPrincipal.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
-                var enrichedQuery = query with
-                {
-                    CallerAccessLevel = AccessLevel.Setad,
-                    CallerAreaId = null,
-                    CallerRegionId = null
-                };
 
-                if (!string.IsNullOrEmpty(callerUserId))
+                GetUserByIdResponse getUserByIdResponse = await mediator.Send(new GetUserByIdQuery(userId), ct);
+                if (getUserByIdResponse != null && Convert.ToInt32(getUserByIdResponse.RoleId) > 0 && string.IsNullOrEmpty(getUserByIdResponse.FailedResult))
                 {
-                    var getUserQuery = new GetUserByIdQuery(callerUserId);
-                    var callerUser = await mediator.Send(getUserQuery, ct);
-                    if (callerUser != null && string.IsNullOrEmpty(callerUser.FailedResult))
+
+                    query = query with
                     {
-                        enrichedQuery = query with
-                        {
-                            CallerAccessLevel = callerUser.AccessLevel,
-                            CallerAreaId = callerUser.AreaId,
-                            CallerRegionId = callerUser.RegionId
-                        };
-                    }
+                        AccessLevel = getUserByIdResponse.AccessLevel,
+                        AreaId = getUserByIdResponse.AreaId,
+                        ZoneId = getUserByIdResponse.ZoneId,
+                        RoleId = Convert.ToInt32(getUserByIdResponse.RoleId)
+                    };
                 }
 
-                GetUsersResponse getUsersResponse = await mediator.Send(enrichedQuery, ct);
+                GetUsersResponse getUsersResponse = await mediator.Send(query, ct);
 
                 if (!string.IsNullOrEmpty(getUsersResponse.FailedResult))
                 {
@@ -540,7 +571,7 @@ namespace ManageUsers.Controllers
 
         private static async Task<Results<Ok<APIResponse<UpdateUserResponse>>, BadRequest<APIResponse<UpdateUserResponse>>>> UpdateUser(
             [FromRoute] string id,
-            [FromBody] UpdateUserRequest request,
+            [FromForm] UpdateUserRequest request,
             IMediator mediator,
             CancellationToken ct)
         {
@@ -557,12 +588,14 @@ namespace ManageUsers.Controllers
                     Email: request.Email,
                     PostalCode: request.PostalCode,
                     PersonalCode: request.PersonalCode,
-                    Position: request.Position,
                     Enabled: request.Enabled,
+                    IsApprovedByAdmin: request.IsApprovedByAdmin,
                     AccessLevel: request.AccessLevel,
                     AreaId: request.AreaId,
-                    RegionId: request.RegionId,
-                    UserRoleIds: request.UserRoleIds);
+                    ZoneId: request.RegionId,
+                    RoleId: request.RoleId,
+                    BirthDate: request.BirthDate,
+                    Avatar: request.Avatar);
 
                 var result = await mediator.Send(command, ct);
 
@@ -613,6 +646,38 @@ namespace ManageUsers.Controllers
             try
             {
                 var result = await sender.Send(new GetAreasByZoneQuery(zoneId), ct);
+                response.StatusCode = HttpStatusCode.OK;
+                response.Result.Data = result;
+                return TypedResults.Ok(response);
+            }
+            catch
+            {
+                throw;
+            }
+        }
+
+        private static async Task<Results<Ok<APIResponse<GetUserProfileResponse>>, BadRequest<APIResponse<GetUserProfileResponse>>>> GetProfile(
+            ClaimsPrincipal claimsPrincipal,
+            ISender sender,
+            CancellationToken ct)
+        {
+            APIResponse<GetUserProfileResponse> response = new();
+
+            try
+            {
+                var userId = claimsPrincipal.FindFirst("nameid")?.Value
+                    ?? claimsPrincipal.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+                var result = await sender.Send(new GetUserProfileQuery(userId), ct);
+
+                if (!string.IsNullOrEmpty(result.FailedResult))
+                {
+                    response.ErrorMessage = [result.FailedResult];
+                    response.IsSuccess = false;
+                    response.StatusCode = HttpStatusCode.BadRequest;
+                    return TypedResults.BadRequest(response);
+                }
+
                 response.StatusCode = HttpStatusCode.OK;
                 response.Result.Data = result;
                 return TypedResults.Ok(response);

@@ -1,6 +1,7 @@
 using ManageUsers.Application.DTOs;
 using ManageUsers.Domain;
 using MediatR;
+using Microsoft.AspNetCore.Http;
 
 namespace ManageUsers.Application.Commands
 {
@@ -13,11 +14,13 @@ namespace ManageUsers.Application.Commands
         string? Email,
         string? PostalCode,
         string? PersonalCode,
-        string? Position,
         bool Enabled,
+        bool IsApprovedByAdmin,
         AccessLevel AccessLevel,
         int? AreaId,
-        int? RegionId,
-        List<string> UserRoleIds
+        int? ZoneId,
+        string RoleId,
+        DateTime? BirthDate,
+        IFormFile? Avatar
     ) : IRequest<UpdateUserResponse>;
 }

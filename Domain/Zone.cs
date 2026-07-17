@@ -1,13 +1,12 @@
 ﻿namespace ManageUsers.Domain
 {
-    public sealed class Region : BaseEntity
+    public sealed class Zone : BaseEntity
     {
         public string Name { get; set; } = null!;
         public string? Description { get; set; }
 
-        public int AreaId { get; set; }
-        public Area Area { get; set; } = null!;
 
+        public ICollection<Area> Areas { get; set; } = new List<Area>();
         public ICollection<User> Users { get; set; } = new List<User>();
     }
 }

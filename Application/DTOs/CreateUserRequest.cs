@@ -31,8 +31,10 @@ namespace ManageUsers.Application.DTOs
         public int? ZoneId {get; set; }
         [Description("ناحیه")]
         public int? AreaId { get; set; }
-        [Description("شناسه نقش های کاربر")]
-        public List<string> UserRoleIds { get; set; }
+        [Description("شناسه نقش کاربر")]
+        public string UserRoleId { get; set; }
+        [Description("تاریخ تولد")]
+        public DateTime? BirthDate { get; set; }
         [Description("عکس پروفایل")]
         public IFormFile? Avatar { get; set; }
 

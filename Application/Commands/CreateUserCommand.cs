@@ -1,17 +1,18 @@
 using ManageUsers.Application.DTOs;
 using ManageUsers.Domain;
 using MediatR;
+using Microsoft.AspNetCore.Http;
 
 namespace ManageUsers.Application.Commands
 {
     public sealed record CreateUserCommand(string FirstName,string LastName,string PhoneNumber,
         string NationalCode,string Email,string PostalCode,
         string UserName, string Password,string? PersonalCode,
-        string? Position, string? Description,
         bool Enabled, DateTime CreatedAt,
         AccessLevel AccessLevel,
-        int? OrganizationId, int? AreaId, int? RegionId,
-        string CreatedById, List<string> UserRoleIds
+        int? AreaId, int? ZoneId,
+        string CreatedById, string UserRoleId,
+        DateTime? BirthDate, IFormFile? Avatar
         ) :  IRequest<CreateUserResponse>
     {};
 }

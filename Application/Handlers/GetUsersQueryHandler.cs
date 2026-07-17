@@ -1,3 +1,4 @@
+using ManageUsers.Application.Common.Utilities;
 using ManageUsers.Application.DTOs;
 using ManageUsers.Application.Queries;
 using ManageUsers.Application.Services.Interfaces;
@@ -17,11 +18,11 @@ namespace ManageUsers.Application.Handlers
 
         public async Task<GetUsersResponse> Handle(GetUsersQuery request, CancellationToken ct)
         {
-            var response = new GetUsersResponse();
+            GetUsersResponse response = new ();
 
             List<User> users = await _userService.GetAllUsersAsync(
                 request.SerachItem, request.PageNumber, request.PageSize,
-                request.CallerAccessLevel, request.CallerAreaId, request.CallerRegionId, ct);
+                request.AccessLevel, request.AreaId, request.ZoneId, request.RoleId, ct);
 
             response.Users = users.Select(u => new UserDto
             {
@@ -33,14 +34,18 @@ namespace ManageUsers.Application.Handlers
                 Enabled = u.Enabled,
                 AccessLevel = u.AccessLevel,
                 AreaId = u.AreaId,
-                RegionId = u.RegionId,
+                ZoneId = u.ZonId,
                 AreaName = u.Area?.Name,
-                RegionName = u.Region?.Name,
-                CreatedAt = u.CreatedAt
+                ZoneName = u.Zone?.Name,
+                BirthDateShamsi = u.BirthDate.ToShamsi(),
+                AvatarUrl = u.AvatarUrl,
+                AdminGeneratedPassword = null,
+                CreatedAt = u.CreatedAt,
+                RoleName = u.UserRoles.FirstOrDefault()?.Role?.Name
             }).ToList();
 
             response.TotalCount = await _userService.GetTotalCountAsync(
-                request.SerachItem, request.CallerAccessLevel, request.CallerAreaId, request.CallerRegionId, ct);
+                request.SerachItem, request.AccessLevel, request.AreaId, request.ZoneId, request.RoleId, ct);
 
             return response;
         }

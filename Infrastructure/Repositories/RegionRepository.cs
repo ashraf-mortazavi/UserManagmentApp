@@ -14,14 +14,14 @@ namespace ManageUsers.Infrastructure.Repositories
             _appDbContext = appDbContext;
         }
 
-        public async Task<List<Region>> GetAllZonesAsync(CancellationToken cancellationToken = default)
+        public async Task<List<Zone>> GetAllZonesAsync(CancellationToken cancellationToken = default)
         {
-            return await _appDbContext.Regions.ToListAsync(cancellationToken: cancellationToken);
+            return await _appDbContext.Zones.ToListAsync(cancellationToken: cancellationToken);
         }
 
-        public async Task<Region> GetZoneAsync(int regionId, CancellationToken cancellationToken = default)
+        public async Task<Zone> GetZoneAsync(int regionId, CancellationToken cancellationToken = default)
         {
-            return await _appDbContext.Regions.FirstOrDefaultAsync(o => o.Id == regionId, cancellationToken: cancellationToken);
+            return await _appDbContext.Zones.FirstOrDefaultAsync(o => o.Id == regionId, cancellationToken: cancellationToken);
 
         }
     }

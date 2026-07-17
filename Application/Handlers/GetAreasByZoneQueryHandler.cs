@@ -16,8 +16,8 @@ namespace ManageUsers.Application.Handlers
 
         public async Task<GetAreasByZoneResponse> Handle(GetAreasByZoneQuery request, CancellationToken ct)
         {
-            var response = new GetAreasByZoneResponse();
-            var areas = await _areaService.GetAreasByZone(request.AreaId, ct);
+            GetAreasByZoneResponse response = new();
+            var areas = await _areaService.GetAreasByZone(request.ZoneId, ct);
             response.Areas = areas.Select(r => new AreaDto(r.Id, r.Name)).ToList();
             return response;
         }

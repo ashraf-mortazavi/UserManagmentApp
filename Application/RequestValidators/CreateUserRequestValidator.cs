@@ -58,11 +58,11 @@ namespace ManageUsers.Application.RequestValidators
               .MaximumLength(StaticDetail.PostalCodeLength)
               .WithMessage(nameof(CreateUserRequest.PostalCode).GetInvalidValueErrorMessage(typeof(CreateUserRequest)));
 
-            RuleFor(o => o.UserRoleIds)
+            RuleFor(o => o.UserRoleId)
                 .NotNull()
-                .WithMessage(nameof(CreateUserRequest.UserRoleIds).GetNullOrEmptyErrorMessage(typeof(CreateUserRequest)))
+                .WithMessage(nameof(CreateUserRequest.UserRoleId).GetNullOrEmptyErrorMessage(typeof(CreateUserRequest)))
                 .NotEmpty()
-                .WithMessage(nameof(CreateUserRequest.UserRoleIds).GetNullOrEmptyErrorMessage(typeof(CreateUserRequest)));
+                .WithMessage(nameof(CreateUserRequest.UserRoleId).GetNullOrEmptyErrorMessage(typeof(CreateUserRequest)));
 
             RuleFor(x => x.AreaId)
                 .NotNull()
@@ -75,26 +75,31 @@ namespace ManageUsers.Application.RequestValidators
                 .When(x => x.AccessLevel == AccessLevel.Area || x.AccessLevel == AccessLevel.Zone)
                 .WithMessage(nameof(CreateUserRequest.AreaId).GetGreaterThanErrorMessage(typeof(CreateUserRequest), 0));
 
-            RuleFor(x => x.RegionId)
+            RuleFor(x => x.ZoneId)
                 .NotNull()
                 .When(x => x.AccessLevel == AccessLevel.Zone)
-                .WithMessage(nameof(CreateUserRequest.RegionId).GetNullOrEmptyErrorMessage(typeof(CreateUserRequest)))
+                .WithMessage(nameof(CreateUserRequest.ZoneId).GetNullOrEmptyErrorMessage(typeof(CreateUserRequest)))
                 .NotEmpty()
                 .When(x => x.AccessLevel == AccessLevel.Zone)
-                .WithMessage(nameof(CreateUserRequest.RegionId).GetNullOrEmptyErrorMessage(typeof(CreateUserRequest)))
+                .WithMessage(nameof(CreateUserRequest.ZoneId).GetNullOrEmptyErrorMessage(typeof(CreateUserRequest)))
                 .GreaterThan(0)
                 .When(x => x.AccessLevel == AccessLevel.Zone)
-                .WithMessage(nameof(CreateUserRequest.RegionId).GetGreaterThanErrorMessage(typeof(CreateUserRequest), 0));
+                .WithMessage(nameof(CreateUserRequest.ZoneId).GetGreaterThanErrorMessage(typeof(CreateUserRequest), 0));
 
             RuleFor(x => x.AreaId)
                 .Null()
                 .When(x => x.AccessLevel == AccessLevel.Setad)
                 .WithMessage("برای سطح دسترسی ستاد نباید منطقه انتخاب شود.");
 
-            RuleFor(x => x.RegionId)
+            RuleFor(x => x.ZoneId)
                 .Null()
                 .When(x => x.AccessLevel != AccessLevel.Zone)
                 .WithMessage("ناحیه فقط برای سطح دسترسی ناحیه قابل انتخاب است.");
+
+            RuleFor(x => x.BirthDate)
+                .LessThanOrEqualTo(DateTime.UtcNow)
+                .When(x => x.BirthDate.HasValue)
+                .WithMessage("تاریخ تولد نمی‌تواند در آینده باشد.");
         }
     }
 }

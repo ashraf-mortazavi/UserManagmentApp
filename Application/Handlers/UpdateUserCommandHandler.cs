@@ -13,23 +13,26 @@ namespace ManageUsers.Application.Handlers
         private readonly IRoleService _roleService;
         private readonly IOrganizationService _organizationService;
         private readonly IAreaService _areaService;
-        private readonly IRegionService _regionService;
+        private readonly IZoneService _zoneService;
         private readonly IUnitOfWork _unitOfWork;
+        private readonly IFileService _fileService;
 
         public UpdateUserCommandHandler(
             IUserService userService,
             IRoleService roleService,
             IOrganizationService organizationService,
             IAreaService areaService,
-            IRegionService regionService,
-            IUnitOfWork unitOfWork)
+            IZoneService regionService,
+            IUnitOfWork unitOfWork,
+            IFileService fileService)
         {
             _userService = userService;
             _roleService = roleService;
             _organizationService = organizationService;
             _areaService = areaService;
-            _regionService = regionService;
+            _zoneService = regionService;
             _unitOfWork = unitOfWork;
+            _fileService = fileService;
         }
 
         public async Task<UpdateUserResponse> Handle(UpdateUserCommand request, CancellationToken ct)
@@ -43,21 +46,11 @@ namespace ManageUsers.Application.Handlers
                 return response;
             }
 
-            var roles = await _roleService.GetRolesAsync(request.UserRoleIds, ct);
-            if (roles == null || roles.Count == 0)
+            Role? role = await _roleService.GetRoleAsync(request.RoleId, ct);
+            if (role == null)
             {
                 response.FailedResult = "نقش مورد نظر یافت نشد!";
                 return response;
-            }
-
-            if (request.OrganizationId.HasValue)
-            {
-                var organization = await _organizationService.GetOrganizationAsync(request.OrganizationId.Value, ct);
-                if (organization == null)
-                {
-                    response.FailedResult = "سازمان مورد نظر یافت نشد!";
-                    return response;
-                }
             }
 
             if (request.AreaId.HasValue)
@@ -65,37 +58,45 @@ namespace ManageUsers.Application.Handlers
                 var area = await _areaService.GetAreaAsync(request.AreaId.Value, ct);
                 if (area == null)
                 {
-                    response.FailedResult = "منظقه مورد نظر یافت نشد!";
-                    return response;
-                }
-            }
-
-            if (request.RegionId.HasValue)
-            {
-                var region = await _regionService.GetRegionAsync(request.RegionId.Value, ct);
-                if (region == null)
-                {
                     response.FailedResult = "ناحیه مورد نظر یافت نشد!";
                     return response;
                 }
             }
 
-            if (request.AccessLevel == AccessLevel.Zone && !request.RegionId.HasValue)
+            if (request.ZoneId.HasValue)
+            {
+                var region = await _zoneService.GetZoneAsync(request.ZoneId.Value, ct);
+                if (region == null)
+                {
+                    response.FailedResult = "منطقه مورد نظر یافت نشد!";
+                    return response;
+                }
+            }
+
+            if (request.AccessLevel == AccessLevel.Zone && !request.ZoneId.HasValue)
             {
                 response.FailedResult = "برای سطح دسترسی منطقه، انتخاب منطقه الزامی است!";
                 return response;
             }
 
-            if (request.AccessLevel == AccessLevel.Area && (!request.AreaId.HasValue || !request.RegionId.HasValue))
+            if (request.AccessLevel == AccessLevel.Area && (!request.AreaId.HasValue || !request.ZoneId.HasValue))
             {
                 response.FailedResult = "برای سطح دسترسی ناحیه، انتخاب منطقه و ناحیه الزامی است!";
                 return response;
             }
 
-            if (request.AccessLevel == AccessLevel.Setad && (request.AreaId.HasValue || request.RegionId.HasValue))
+            if (request.AccessLevel == AccessLevel.Setad && (request.AreaId.HasValue || request.ZoneId.HasValue))
             {
                 response.FailedResult = "برای سطح دسترسی ستاد نباید منطقه یا ناحیه انتخاب شود!";
                 return response;
+            }
+
+            if (request.Avatar is not null)
+            {
+                if (!string.IsNullOrEmpty(user.AvatarUrl))
+                    await _fileService.DeleteFileAsync(user.AvatarUrl, ct);
+
+                user.AvatarUrl = await _fileService.UploadAvatarAsync(request.Avatar, ct);
             }
 
             user.FirstName = request.FirstName;
@@ -105,16 +106,16 @@ namespace ManageUsers.Application.Handlers
             user.Email = request.Email;
             user.PostalCode = request.PostalCode;
             user.PersonalCode = request.PersonalCode;
-            user.Position = request.Position;
             user.Enabled = request.Enabled;
             user.AccessLevel = request.AccessLevel;
             user.AreaId = request.AreaId;
-            user.RegionId = request.RegionId;
+            user.ZonId = request.ZoneId;
+            user.BirthDate = request.BirthDate;
             user.UpdatedAt = DateTime.UtcNow;
 
             _userService.UpdateUser(user, ct);
 
-            var roleResult = await _userService.UpdateUserRolesAsync(user, roles.Select(r => r.Name!).ToList(), ct);
+            var roleResult = await _userService.UpdateUserRolesAsync(user, role.Name!, ct);
             if (!roleResult.Succeeded)
             {
                 response.FailedResult = roleResult.Errors.Select(x => x.Description).FirstOrDefault();

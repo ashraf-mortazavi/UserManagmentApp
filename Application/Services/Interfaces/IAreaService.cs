@@ -6,6 +6,6 @@ namespace ManageUsers.Application.Services.Interfaces
     {
         Task<Area> GetAreaAsync(int areaId, CancellationToken cancellationToken = default);
 
-        Task<List<Area>> GetAreasByZone(int areaId, CancellationToken ct = default);
+        Task<List<Area>> GetAreasByZone(int zoneId, CancellationToken ct = default);
     }
 }

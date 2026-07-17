@@ -8,8 +8,8 @@ namespace ManageUsers.Application.Services.Interfaces
     {
         Task<User> GetUserByIdAsync(string userId, CancellationToken ct = default);
         Task<User?> GetUserByIdWithRolesAsync(string userId, CancellationToken ct = default);
-        Task<List<string>> GetUserRoleIdsAsync(int userId, CancellationToken ct = default);
-        Task<IdentityResult> UpdateUserRolesAsync(User user, List<string> newRoleNames, CancellationToken ct = default);
+        Task<string> GetUserRoleIdsAsync(int userId, CancellationToken ct = default);
+        Task<IdentityResult> UpdateUserRolesAsync(User user, string newRoleName, CancellationToken ct = default);
         Task<User?> GetByUserNameAsync(string userName, CancellationToken ct = default);
         Task<User?> GetUserByPhoneNumber(string phoneNumber, CancellationToken ct = default);
         Task<User?> GetUserByNationalCodeAsync(string nationalCode, CancellationToken ct = default);
@@ -17,7 +17,7 @@ namespace ManageUsers.Application.Services.Interfaces
 
         Task<IdentityResult> SetPasswordByUserIdAsync(string userId, string newPassword);
 
-        Task<IdentityResult> AssignUserRolesAsync(User user, string password, List<string> roles, CancellationToken cancellationToken = default);
+        Task<IdentityResult> AssignUserRoleAsync(User user, string password, string role, CancellationToken cancellationToken = default);
 
         Task<JWEToken> CreateTokenAsync(CreateTokenContext context, CancellationToken cancellationToken = default);
         
@@ -30,12 +30,8 @@ namespace ManageUsers.Application.Services.Interfaces
         Task ResetFailedAttemptsAsync(User user);
         Task<int> GetAccessFailedCountAsync(User user);
 
-        Task<List<User>> GetAllUsersAsync(string? searchTerm, int pageNumber, int pageSize, AccessLevel callerAccessLevel, int? callerAreaId, int? callerRegionId, CancellationToken ct);
+        Task<List<User>> GetAllUsersAsync(string? searchTerm, int pageNumber, int pageSize, AccessLevel accessLevel, int? areaId, int? zoneId, int roleId, CancellationToken ct);
 
-        Task<int> GetTotalCountAsync(string? searchTerm, AccessLevel callerAccessLevel, int? callerAreaId, int? callerRegionId, CancellationToken ct);
-
-        Task<List<Area>> GetAllZonesAsync(CancellationToken ct = default);
-        Task<List<Region>> GetRegionsByAreaAsync(int areaId, CancellationToken ct = default);
-
+        Task<int> GetTotalCountAsync(string? searchTerm, AccessLevel accessLevel, int? areaId, int? zoneId, int roleId, CancellationToken ct);
     }
 }

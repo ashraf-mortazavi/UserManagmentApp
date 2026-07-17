@@ -25,7 +25,7 @@ namespace ManageUsers.Infrastructure.Persistence
             RolePermissions = rolePermissions;
             Organizations = organizations;
             Areas = areas;
-            Regions = regions;
+            Zones = regions;
             Permissions = permissions;
         }
 
@@ -41,7 +41,7 @@ namespace ManageUsers.Infrastructure.Persistence
 
         public IAreaRepository Areas { get; }
 
-        public IZoneRepository Regions { get; }
+        public IZoneRepository Zones { get; }
 
         public IPermissionRepository Permissions { get; }
 

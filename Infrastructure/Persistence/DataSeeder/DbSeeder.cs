@@ -1,4 +1,4 @@
-﻿using ManageUsers.Domain;
+using ManageUsers.Domain;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
@@ -24,6 +24,11 @@ public static class DbSeeder
             Role operatorRole = new Role { Name = "Operator", Description = "Operatorial access" };
             await roleManager.CreateAsync(operatorRole);
 
+            await db.SaveChangesAsync(ct);
+
+            superAdminRole.NextLowerRoleId = adminRole.Id;
+            adminRole.NextLowerRoleId = managerRole.Id;
+            managerRole.NextLowerRoleId = operatorRole.Id;
             await db.SaveChangesAsync(ct);
         }
 

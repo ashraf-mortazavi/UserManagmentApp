@@ -30,23 +30,23 @@ public class UserService(
     private const int MinimumRangeOTP = 0;
     private const int MaximumRangeOTP = 100000;
 
-    public async Task<IdentityResult> AssignUserRolesAsync(User user, string password, List<string> roles, CancellationToken cancellationToken = default)
+    public async Task<IdentityResult> AssignUserRoleAsync(User user, string password, string role, CancellationToken cancellationToken = default)
     {
         var createResult = await _userManager.CreateAsync(user, password);
 
         if (!createResult.Succeeded)
         {
             if (createResult.Errors.Any(e => e.Code == "DuplicateUserName"))
-                return IdentityResult.Failed(new IdentityError { Description = "A user with that name already exists." });
+                return IdentityResult.Failed(new IdentityError { Description = "کاربر با این نام وجود دارد!" });
 
             if (createResult.Errors.Any(e => e.Code == "DuplicateNationalCode"))
-                return IdentityResult.Failed(new IdentityError { Description = "A user with that national code already exists." });
+                return IdentityResult.Failed(new IdentityError { Description = "کاربر با این کد ملی وجود دارد!" });
             
             return IdentityResult.Failed(new IdentityError { Description = $"User creation failed: {string.Join(", ", createResult.Errors)}" });
         }
-        var addRoleResult = await _userManager.AddToRolesAsync(user, roles);
+        var addRoleResult = await _userManager.AddToRoleAsync(user, role);
         if (!addRoleResult.Succeeded)
-            return IdentityResult.Failed(new IdentityError { Description = "Failed to assign roles." });
+            return IdentityResult.Failed(new IdentityError { Description = "اختصاص نقش به کاربر با مشکل مواجه شد!" });
 
         return createResult;
     }
@@ -124,19 +124,19 @@ public class UserService(
         return await _unitOfWork.Users.GetUserByIdWithRolesAsync(userId, ct);
     }
 
-    public async Task<List<string>> GetUserRoleIdsAsync(int userId, CancellationToken ct = default)
+    public async Task<string> GetUserRoleIdsAsync(int userId, CancellationToken ct = default)
     {
         return await _unitOfWork.Users.GetUserRoleIdsAsync(userId, ct);
     }
 
-    public async Task<IdentityResult> UpdateUserRolesAsync(User user, List<string> newRoleNames, CancellationToken ct = default)
+    public async Task<IdentityResult> UpdateUserRolesAsync(User user, string newRoleName, CancellationToken ct = default)
     {
         var currentRoles = await _userManager.GetRolesAsync(user);
         var removeResult = await _userManager.RemoveFromRolesAsync(user, currentRoles);
         if (!removeResult.Succeeded)
             return removeResult;
 
-        var addResult = await _userManager.AddToRolesAsync(user, newRoleNames);
+        var addResult = await _userManager.AddToRoleAsync(user, newRoleName);
         return addResult;
     }
 
@@ -231,23 +231,14 @@ public class UserService(
        _unitOfWork.Users.Update(user);
     }
 
-    public async Task<List<User>> GetAllUsersAsync(string? searchTerm, int pageNumber, int pageSize, AccessLevel callerAccessLevel, int? callerAreaId, int? callerRegionId, CancellationToken ct)
+    public async Task<List<User>> GetAllUsersAsync(string? searchTerm, int pageNumber, int pageSize, AccessLevel accessLevel, int? areaId, int? zoneId, int roleId, CancellationToken ct)
     {
-        return await _unitOfWork.Users.GetAllUsersWithFilterAsync(searchTerm ?? string.Empty, pageNumber, pageSize, callerAccessLevel, callerAreaId, callerRegionId, ct);
+        return await _unitOfWork.Users.GetAllUsersWithFilterAsync(searchTerm ?? string.Empty, pageNumber, pageSize, accessLevel, areaId, zoneId, roleId, ct);
     }
 
-    public async Task<int> GetTotalCountAsync(string? searchTerm, AccessLevel callerAccessLevel, int? callerAreaId, int? callerRegionId, CancellationToken ct)
+    public async Task<int> GetTotalCountAsync(string? searchTerm, AccessLevel accessLevel, int? areaId, int? zoneId, int roleId, CancellationToken ct)
     {
-        return await _unitOfWork.Users.GetTotalCountAsync(searchTerm ?? string.Empty, callerAccessLevel, callerAreaId, callerRegionId, ct);
+        return await _unitOfWork.Users.GetTotalCountAsync(searchTerm ?? string.Empty, accessLevel, areaId, zoneId, roleId, ct);
     }
 
-    public async Task<List<Area>> GetAllZonesAsync(CancellationToken ct = default)
-    {
-        return await _unitOfWork.Users.GetAllAreasAsync(ct);
-    }
-
-    public async Task<List<Region>> GetRegionsByAreaAsync(int areaId, CancellationToken ct = default)
-    {
-        return await _unitOfWork.Users.GetRegionsByAreaAsync(areaId, ct);
-    }
 }

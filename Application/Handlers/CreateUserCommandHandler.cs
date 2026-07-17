@@ -1,12 +1,8 @@
-using Azure;
 using ManageUsers.Application.Commands;
 using ManageUsers.Application.DTOs;
-using ManageUsers.Application.Interfaces;
 using ManageUsers.Application.Services.Interfaces;
 using ManageUsers.Domain;
 using MediatR;
-using Microsoft.AspNetCore.Mvc;
-using System.Threading;
 
 
 
@@ -20,23 +16,25 @@ namespace ManageUsers.Application.Handlers
         private readonly IUserService _userService;
         private readonly IOrganizationService _organizationService;
         private readonly IAreaService _areaService;
-        private readonly IRegionService _regionService;
+        private readonly IZoneService _zoneService;
+        private readonly IFileService _fileService;
 
-        public CreateUserCommandHandler(IRoleService roleService, IUserService userService, IOrganizationService organizationService, IAreaService areaService, IRegionService regionService)
+        public CreateUserCommandHandler(IRoleService roleService, IUserService userService, IOrganizationService organizationService, IAreaService areaService, IZoneService regionService, IFileService fileService)
         {
             _roleService = roleService;
             _userService = userService;
             _organizationService = organizationService;
             _areaService = areaService;
-            _regionService = regionService;
+            _zoneService = regionService;
+            _fileService = fileService;
         }
 
         public async Task<CreateUserResponse> Handle(CreateUserCommand request, CancellationToken ct)
         {
             CreateUserResponse userResponse = new();
-            List<Role?> roles = await _roleService.GetRolesAsync(request.UserRoleIds, ct);
+            Role? role = await _roleService.GetRoleAsync(request.UserRoleId, ct);
 
-            if (!roles.Any() || roles is null || roles.Count == 0)
+            if (role is null)
             {
                 userResponse.FailedResult = "نقش مورد نظر یافت نشد!";
                 return userResponse;
@@ -49,13 +47,12 @@ namespace ManageUsers.Application.Handlers
                 return userResponse;
             }
 
-            Organization organization = null;
-            if (request.OrganizationId.HasValue)
+            if (request.ZoneId.HasValue)
             {
-                var existOrganization = await _organizationService.GetOrganizationAsync(request.OrganizationId!.Value, ct);
-                if (existOrganization == null)
+                var existZone = await _zoneService.GetZoneAsync(request.ZoneId!.Value, ct);
+                if (existZone == null)
                 {
-                    userResponse.FailedResult = "سازمان مورد نظر یافت نشد!";
+                    userResponse.FailedResult = "منطقه مورد نظر یافت نشد!";
                     return userResponse;
                 }
             }
@@ -65,37 +62,33 @@ namespace ManageUsers.Application.Handlers
                 var existArea = await _areaService.GetAreaAsync(request.AreaId!.Value, ct);
                 if (existArea == null)
                 {
-                    userResponse.FailedResult = "منظقه مورد نظر یافت نشد!";
-                    return userResponse;
-                }
-            }
-
-            if (request.RegionId.HasValue)
-            {
-                var existRegion = await _regionService.GetRegionAsync(request.RegionId!.Value, ct);
-                if (existRegion == null)
-                {
                     userResponse.FailedResult = "ناحیه مورد نظر یافت نشد!";
                     return userResponse;
                 }
             }
 
-            if (request.AccessLevel == AccessLevel.Area && !request.AreaId.HasValue)
-            {
-                userResponse.FailedResult = "برای سطح دسترسی منطقه، انتخاب منطقه الزامی است!";
-                return userResponse;
-            }
-
-            if (request.AccessLevel == AccessLevel.Zone && (!request.AreaId.HasValue || !request.RegionId.HasValue))
+            if (request.AccessLevel == AccessLevel.Area && (!request.AreaId.HasValue || !request.ZoneId.HasValue))
             {
                 userResponse.FailedResult = "برای سطح دسترسی ناحیه، انتخاب منطقه و ناحیه الزامی است!";
                 return userResponse;
             }
 
-            if (request.AccessLevel == AccessLevel.Setad && (request.AreaId.HasValue || request.RegionId.HasValue))
+            if (request.AccessLevel == AccessLevel.Zone && !request.ZoneId.HasValue)
+            {
+                userResponse.FailedResult = "برای سطح دسترسی منطقه، انتخاب منطقه  الزامی است!";
+                return userResponse;
+            }
+
+            if (request.AccessLevel == AccessLevel.Setad && (request.AreaId.HasValue || request.ZoneId.HasValue))
             {
                 userResponse.FailedResult = "برای سطح دسترسی ستاد نباید منطقه یا ناحیه انتخاب شود!";
                 return userResponse;
+            }
+
+            string? avatarUrl = null;
+            if (request.Avatar is not null)
+            {
+                avatarUrl = await _fileService.UploadAvatarAsync(request.Avatar, ct);
             }
 
             User newUser = new User();
@@ -105,22 +98,24 @@ namespace ManageUsers.Application.Handlers
             newUser.PhoneNumber = request.PhoneNumber;
             newUser.Email = request.Email;
             newUser.PostalCode = request.PostalCode;
-            newUser.RegionId = request.RegionId;
+            newUser.ZonId = request.ZoneId;
             newUser.AreaId = request.AreaId;
-            newUser.Description = request.Description;
-            newUser.OrganizationId = request.OrganizationId;
             newUser.PersonalCode = request.PersonalCode;
-            newUser.Position = request.Position;
             newUser.CreatedById = request.CreatedById;
-            newUser.Enabled = true;
+            newUser.Enabled = request.Enabled;
             newUser.AccessLevel = request.AccessLevel;
             newUser.IsFirstLogin = true;
             newUser.CreatedAt = DateTime.UtcNow;
             newUser.UserName = request.UserName;
+            newUser.BirthDate = request.BirthDate;
+            newUser.AvatarUrl = avatarUrl;
 
-            var result = await _userService.AssignUserRolesAsync(user: newUser, request.Password, roles.Select(x => x.Name!).ToList(), cancellationToken: ct);
+            var result = await _userService.AssignUserRoleAsync(user: newUser, request.Password, role.Name!, cancellationToken: ct);
             if (!result.Succeeded)
             {
+                if (avatarUrl is not null)
+                    await _fileService.DeleteFileAsync(avatarUrl, ct);
+
                 userResponse.FailedResult = result.Errors.Select(x => x.Description).FirstOrDefault();
                 return userResponse;
             }

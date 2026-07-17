@@ -16,19 +16,27 @@ namespace ManageUsers.Infrastructure.Repositories
             _context = context;
         }
 
-        public async Task<List<User>> GetAllUsersWithFilterAsync(string filter, int page, int pagesize, AccessLevel callerAccessLevel, int? callerAreaId, int? callerRegionId, CancellationToken cancellationToken)
+        public async Task<List<User>> GetAllUsersWithFilterAsync(string filter, int page, int pagesize, AccessLevel accessLevel, int? areaId, int? zoneId, int roleId, CancellationToken cancellationToken)
         {
+            var visibleRoleIds = await GetVisibleRoleIdsAsync(roleId);
+
             IQueryable<User> query = _context.Users
                 .Include(u => u.Area)
-                .Include(u => u.Region);
+                .Include(u => u.Zone)
+                .Include(u => u.UserRoles)
+                .ThenInclude(ur => ur.Role);
 
-            query = ApplyAccessLevelFilter(query, callerAccessLevel, callerAreaId, callerRegionId);
+            query = ApplyRoleFilter(query, visibleRoleIds);
+            query = ApplyAccessLevelFilter(query, accessLevel, areaId, zoneId);
 
             if (!string.IsNullOrEmpty(filter))
             {
                 string toUpperFilter = filter.ToUpper();
-                query = query.Where(u => u.FirstName.ToUpper().Contains(toUpperFilter) || u.LastName.ToUpper().Contains(toUpperFilter) ||
-                    u.PhoneNumber.ToUpper().Contains(toUpperFilter) || u.UserName.ToUpper().Contains(toUpperFilter));
+                query = query.Where(u => u.FirstName.ToUpper().Contains(toUpperFilter) ||
+                    u.LastName.ToUpper().Contains(toUpperFilter) ||
+                    u.NationalCode.ToUpper().Contains(toUpperFilter) ||
+                    u.Enabled.ToString() == toUpperFilter ||
+                    u.UserRoles.Select(r => r.Role.Name.ToUpper().Contains(toUpperFilter)).FirstOrDefault());
             }
 
             return await query
@@ -39,34 +47,73 @@ namespace ManageUsers.Infrastructure.Repositories
                 .ToListAsync(cancellationToken);
         }
 
-        public async Task<int> GetTotalCountAsync(string filter, AccessLevel callerAccessLevel, int? callerAreaId, int? callerRegionId, CancellationToken cancellationToken)
+        public async Task<int> GetTotalCountAsync(string filter, AccessLevel accessLevel, int? areaId, int? zoneId, int roleId, CancellationToken cancellationToken)
         {
-            IQueryable<User> query = _context.Users;
+            var visibleRoleIds = await GetVisibleRoleIdsAsync(roleId);
 
-            query = ApplyAccessLevelFilter(query, callerAccessLevel, callerAreaId, callerRegionId);
+            IQueryable<User> query = _context.Users
+                .Include(u => u.UserRoles)
+                .ThenInclude(ur => ur.Role);
+
+            query = ApplyRoleFilter(query, visibleRoleIds);
+            query = ApplyAccessLevelFilter(query, accessLevel, areaId, zoneId);
+
 
             if (!string.IsNullOrEmpty(filter))
             {
                 string toUpperFilter = filter.ToUpper();
-                query = query.Where(u => u.FirstName.ToUpper().Contains(toUpperFilter) || u.LastName.ToUpper().Contains(toUpperFilter) ||
-                    u.PhoneNumber.ToUpper().Contains(toUpperFilter) || u.UserName.ToUpper().Contains(toUpperFilter));
+                query = query.Where(u => u.FirstName.ToUpper().Contains(toUpperFilter) ||
+                    u.LastName.ToUpper().Contains(toUpperFilter) ||
+                    u.NationalCode.ToUpper().Contains(toUpperFilter) ||
+                    u.Enabled.ToString() == toUpperFilter || 
+                    u.UserRoles.Select(r => r.Role.Name.ToUpper().Contains(toUpperFilter)).FirstOrDefault());
             }
 
             return await query.CountAsync(cancellationToken);
         }
 
-        private IQueryable<User> ApplyAccessLevelFilter(IQueryable<User> query, AccessLevel callerAccessLevel, int? callerAreaId, int? callerRegionId)
+        private async Task<HashSet<int>> GetVisibleRoleIdsAsync(int roleId)
         {
-            return callerAccessLevel switch
+            var visibleRoleIds = new HashSet<int>();
+            await TraverseRoleHierarchyAsync(roleId, visibleRoleIds);
+            return visibleRoleIds;
+        }
+
+        private IQueryable<User> ApplyAccessLevelFilter(IQueryable<User> query, AccessLevel accessLevel, int? areaId, int? zoneId)
+        {
+            return accessLevel switch
             {
                 AccessLevel.Setad => query,
                 AccessLevel.Area => query.Where(u =>
-                    (u.AreaId == callerAreaId) ||
-                    (u.Region != null && u.Region.AreaId == callerAreaId)),
+                    (u.AreaId == areaId) ||
+                    (u.Zone != null && u.Zone.Id == zoneId)),
                 AccessLevel.Zone => query.Where(u =>
-                    u.AreaId == callerAreaId && u.RegionId == callerRegionId),
+                    u.AreaId == areaId && u.ZonId == zoneId),
                 _ => query
             };
+        }
+
+        private IQueryable<User> ApplyRoleFilter(IQueryable<User> query, HashSet<int> visibleRoleIds)
+        {
+            return query.Where(u => u.UserRoles.Any(ur => visibleRoleIds.Contains(ur.RoleId)));
+        }
+
+     
+
+        private async Task TraverseRoleHierarchyAsync(int roleId, HashSet<int> visibleRoleIds)
+        {
+            if (!visibleRoleIds.Add(roleId))
+                return;
+
+            var role = await _context.Roles
+                .Where(r => r.Id == roleId)
+                .Select(r => new { r.NextLowerRoleId })
+                .FirstOrDefaultAsync();
+
+            if (role?.NextLowerRoleId.HasValue == true)
+            {
+                await TraverseRoleHierarchyAsync(role.NextLowerRoleId.Value, visibleRoleIds);
+            }
         }
 
 
@@ -93,18 +140,17 @@ namespace ManageUsers.Infrastructure.Repositories
             return await _context.Users
                 .Include(u => u.UserRoles)
                 .ThenInclude(ur => ur.Role)
-                .Include(u => u.Organization)
                 .Include(u => u.Area)
-                .Include(u => u.Region)
+                .Include(u => u.Zone)
                 .FirstOrDefaultAsync(u => u.Id.ToString() == userId, ct);
         }
 
-        public async Task<List<string>> GetUserRoleIdsAsync(int userId, CancellationToken ct = default)
+        public async Task<string> GetUserRoleIdsAsync(int userId, CancellationToken ct = default)
         {
             return await _context.UserRoles
                 .Where(ur => ur.UserId == userId)
                 .Select(ur => ur.RoleId.ToString())
-                .ToListAsync(ct);
+                .FirstOrDefaultAsync(ct);
         }
 
         public async Task<User?> GetUserByNationalCodeAsync(string nationalCode, CancellationToken cancellationToken = default)

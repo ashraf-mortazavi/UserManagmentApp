@@ -1,5 +1,6 @@
 using System.ComponentModel;
 using ManageUsers.Domain;
+using Microsoft.AspNetCore.Http;
 
 namespace ManageUsers.Application.DTOs
 {
@@ -19,12 +20,10 @@ namespace ManageUsers.Application.DTOs
         public string? PostalCode { get; set; }
         [Description("کد پرسنلی")]
         public string? PersonalCode { get; set; }
-        [Description("موقعیت")]
-        public string? Position { get; set; }
-        [Description("توضیحات")]
-        public string? Description { get; set; }
         [Description("فعال/غیرفعال")]
         public bool Enabled { get; set; }
+        [Description("تایید شده توسط ادمین/رد شده توسط ادمین")]
+        public bool IsApprovedByAdmin { get; set; }
         [Description("سطح دسترسی")]
         public AccessLevel AccessLevel { get; set; } = AccessLevel.Setad;
         [Description("منطقه")]
@@ -32,7 +31,11 @@ namespace ManageUsers.Application.DTOs
         [Description("ناحیه")]
         public int? RegionId { get; set; }
         [Description("شناسه نقش های کاربر")]
-        public List<string> UserRoleIds { get; set; } = new();
+        public string RoleId { get; set; }
+        [Description("تاریخ تولد")]
+        public DateTime? BirthDate { get; set; }
+        [Description("عکس پروفایل")]
+        public IFormFile? Avatar { get; set; }
     }
 
     public sealed class UpdateUserResponse : BaseResponse

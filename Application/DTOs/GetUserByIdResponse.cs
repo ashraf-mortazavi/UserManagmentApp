@@ -13,14 +13,16 @@ namespace ManageUsers.Application.DTOs
         public string? Email { get; set; }
         public string? PostalCode { get; set; }
         public string? PersonalCode { get; set; }
-        public string? Position { get; set; }
         public bool Enabled { get; set; }
         public AccessLevel AccessLevel { get; set; } = AccessLevel.Setad;
         public int? AreaId { get; set; }
-        public int? RegionId { get; set; }
+        public int? ZoneId { get; set; }
         public string? AreaName { get; set; }
-        public string? RegionName { get; set; }
-        public List<string> UserRoleIds { get; set; } = new();
+        public string? ZoneName { get; set; }
+        public DateTime? BirthDate { get; set; }
+        public string? BirthDateShamsi { get; set; }
+        public string? AvatarUrl { get; set; }
+        public string RoleId { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime? UpdatedAt { get; set; }
     }

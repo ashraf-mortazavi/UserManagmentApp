@@ -8,8 +8,9 @@ namespace ManageUsers.Application.Queries
         string? SerachItem = null,
         int PageNumber = 1,
         int PageSize = 10,
-        AccessLevel CallerAccessLevel = AccessLevel.Setad,
-        int? CallerAreaId = null,
-        int? CallerRegionId = null
+        AccessLevel AccessLevel = AccessLevel.Setad,
+        int? AreaId = null,
+        int? ZoneId = null,
+        int RoleId = 0
     ) : IRequest<GetUsersResponse>;
 }

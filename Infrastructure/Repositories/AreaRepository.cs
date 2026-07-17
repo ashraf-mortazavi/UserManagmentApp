@@ -15,9 +15,9 @@ namespace ManageUsers.Infrastructure.Repositories
             _appDbContext = appDbContext;
         }
 
-        public async Task<List<Region>> GetAllZonesAsync(CancellationToken cancellationToken = default)
+        public async Task<List<Zone>> GetAllZonesAsync(CancellationToken cancellationToken = default)
         {
-            return await _appDbContext.Regions
+            return await _appDbContext.Zones
                 .OrderBy(a => a.Name)
                 .AsNoTracking()
                 .ToListAsync(cancellationToken);
@@ -28,14 +28,15 @@ namespace ManageUsers.Infrastructure.Repositories
             return await _appDbContext.Areas.FirstOrDefaultAsync(o => o.Id == areaId, cancellationToken: cancellationToken);
         }
 
-        public Task<Region> GetRegionAsync(int regionId, CancellationToken cancellationToken = default)
+        public Task<Zone> GetRegionAsync(int regionId, CancellationToken cancellationToken = default)
         {
             throw new NotImplementedException();
         }
 
-        public async Task<List<Area>> GetAreasByZoneAsync(int areaId, CancellationToken cancellationToken = default)
+        public async Task<List<Area>> GetAreasByZoneAsync(int zoneId, CancellationToken cancellationToken = default)
         {
-            return await _appDbContext.Areas.Where(r => r.Id == areaId).OrderBy(r => r.Name)
+            return await _appDbContext.Areas.Where(r => r.ZoneId == zoneId)
+                .OrderBy(r => r.Name)
                 .AsNoTracking()
                 .ToListAsync(cancellationToken);
         }

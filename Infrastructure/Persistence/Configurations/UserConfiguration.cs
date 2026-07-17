@@ -1,4 +1,4 @@
-﻿
+
 using ManageUsers.Domain;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
@@ -34,13 +34,8 @@ public sealed class UserConfiguration : IEntityTypeConfiguration<User>
             .IsRequired(false)
             .HasMaxLength(50);
 
-        builder.Property(x => x.Position)
-            .IsRequired(false)
-            .HasMaxLength(100);
-
-        builder.Property(x => x.Description)
-            .IsRequired(false)
-            .HasMaxLength(700);
+        builder.Property(x => x.BirthDate)
+            .IsRequired(false);
 
         builder.Property(x => x.UserName)
             .HasMaxLength(100)
@@ -69,9 +64,9 @@ public sealed class UserConfiguration : IEntityTypeConfiguration<User>
             .HasForeignKey(x => x.AreaId)
             .OnDelete(DeleteBehavior.Restrict);
 
-        builder.HasOne(x => x.Region)
+        builder.HasOne(x => x.Zone)
             .WithMany(x => x.Users)
-            .HasForeignKey(x => x.RegionId)
+            .HasForeignKey(x => x.ZonId)
             .OnDelete(DeleteBehavior.Restrict);
 
     }
