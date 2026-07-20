@@ -57,6 +57,7 @@ namespace ManageUsers.Application.Handlers
             response.PostalCode = user.PostalCode;
             response.PersonalCode = user.PersonalCode;
             response.Enabled = user.Enabled;
+            response.AccessLevelName = user.AccessLevel.ToString();
             response.AreaName = area is null ? string.Empty : area.Name;
             response.AreaId = area is null ? 0 : area.Id;
             response.ZoneName = zone is null ? string.Empty : zone.Name;

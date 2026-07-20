@@ -117,5 +117,53 @@ public static class DbSeeder
                 await db.SaveChangesAsync(ct);
             }
         }
+
+        if (!await db.Zones.AnyAsync(ct))
+        {
+            var zones = new List<Zone>
+            {
+                new Zone { Name = "تهران", Description = "استان تهران" },
+                new Zone { Name = "اصفهان", Description = "استان اصفهان" },
+                new Zone { Name = "فارس", Description = "استان فارس" },
+                new Zone { Name = "خراسان رضوی", Description = "استان خراسان رضوی" },
+                new Zone { Name = "آذربایجان شرقی", Description = "استان آذربایجان شرقی" }
+            };
+            db.Zones.AddRange(zones);
+            await db.SaveChangesAsync(ct);
+
+            var savedZones = await db.Zones.ToListAsync(ct);
+
+            var areas = new List<Area>
+            {
+                // تهران
+                new Area { Name = "شمال تهران", Description = "مناطق شمالی شهر تهران شامل تجریش، نیاوران، فرمانیه", ZoneId = savedZones[0].Id },
+                new Area { Name = "جنوب تهران", Description = "مناطق جنوبی شهر تهران شامل شوش، مولوی، جوادیه", ZoneId = savedZones[0].Id },
+                new Area { Name = "شرق تهران", Description = "مناطق شرقی شهر تهران شامل تهرانپارس، مجیدیه، وحیدیه", ZoneId = savedZones[0].Id },
+                new Area { Name = "غرب تهران", Description = "مناطق غربی شهر تهران شامل تهرانسر، شهران، چیتگر", ZoneId = savedZones[0].Id },
+                new Area { Name = "مرکز تهران", Description = "مناطق مرکزی شهر تهران شامل انقلاب، آزادی، امیرآباد", ZoneId = savedZones[0].Id },
+
+                // اصفهان
+                new Area { Name = "مرکز اصفهان", Description = "میدان نقش جهان، کاخ عالی قاپو، بازار بزرگ", ZoneId = savedZones[1].Id },
+                new Area { Name = "شرق اصفهان", Description = "منطقه جی، خمینی شهر، دولت آباد", ZoneId = savedZones[1].Id },
+                new Area { Name = "غرب اصفهان", Description = "منطقه زرین شهر، فولادشهر، مبارکه", ZoneId = savedZones[1].Id },
+
+                // فارس
+                new Area { Name = "شیراز", Description = "مرکز استان فارس، حافظیه، ناصرخسرو", ZoneId = savedZones[2].Id },
+                new Area { Name = "کازرون", Description = "شهرستان کازرون، بیشاپور", ZoneId = savedZones[2].Id },
+                new Area { Name = "لارستان", Description = " شهرستان لار، بندرعباس هرمزگان", ZoneId = savedZones[2].Id },
+
+                // خراسان رضوی
+                new Area { Name = "مشهد", Description = "مرکز استان خراسان رضوی، حرم امام رضا(ع)", ZoneId = savedZones[3].Id },
+                new Area { Name = "نیشابور", Description = "شهرستان نیشابور، آرامگاه عطار", ZoneId = savedZones[3].Id },
+                new Area { Name = "سبزوار", Description = "شهرستان سبزوار، خوشاب", ZoneId = savedZones[3].Id },
+
+                // آذربایجان شرقی
+                new Area { Name = "تبریز", Description = "مرکز استان آذربایجان شرقی، بازار تبریز", ZoneId = savedZones[4].Id },
+                new Area { Name = "مراغه", Description = "شهرستان مراغه، رصدخانه مراغه", ZoneId = savedZones[4].Id },
+                new Area { Name = "اهر", Description = "شهرستان اهر، کلیسای استفانوس مقدس", ZoneId = savedZones[4].Id }
+            };
+            db.Areas.AddRange(areas);
+            await db.SaveChangesAsync(ct);
+        }
     }
 }

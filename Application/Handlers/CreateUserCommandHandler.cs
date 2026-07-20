@@ -85,11 +85,6 @@ namespace ManageUsers.Application.Handlers
                 return userResponse;
             }
 
-            string? avatarUrl = null;
-            if (request.Avatar is not null)
-            {
-                avatarUrl = await _fileService.UploadAvatarAsync(request.Avatar, ct);
-            }
 
             User newUser = new User();
             newUser.FirstName = request.FirstName;
@@ -108,14 +103,10 @@ namespace ManageUsers.Application.Handlers
             newUser.CreatedAt = DateTime.UtcNow;
             newUser.UserName = request.UserName;
             newUser.BirthDate = request.BirthDate;
-            newUser.AvatarUrl = avatarUrl;
 
             var result = await _userService.AssignUserRoleAsync(user: newUser, request.Password, role.Name!, cancellationToken: ct);
             if (!result.Succeeded)
             {
-                if (avatarUrl is not null)
-                    await _fileService.DeleteFileAsync(avatarUrl, ct);
-
                 userResponse.FailedResult = result.Errors.Select(x => x.Description).FirstOrDefault();
                 return userResponse;
             }

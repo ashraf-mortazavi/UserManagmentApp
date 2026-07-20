@@ -87,7 +87,6 @@ namespace ManageUsers.Controllers
                .WithSummary("Generate Captch Code");
 
             group.MapGet("", GetUsers)
-                .RequireAuthorization()
                 .WithDisplayName("دریافت کاربران")
                 .WithSummary("Get All Users");
 
@@ -115,10 +114,16 @@ namespace ManageUsers.Controllers
                 .RequireAuthorization()
                 .WithDisplayName("دریافت پروفایل کاربر")
                 .WithSummary("Get current user profile info");
+
+            group.MapPut("/profile", UpdateProfile)
+                .RequireAuthorization()
+                .WithDisplayName("ویرایش پروفایل کاربر")
+                .WithSummary("Update current user profile")
+                .Validator<UpdateUserProfileRequest>();
         }
 
         public static async Task<Results<Ok<APIResponse<CreateUserResponse>>, BadRequest<APIResponse<CreateUserResponse>>>> CreateUser(
-            [FromForm] CreateUserRequest request,
+            [FromBody] CreateUserRequest request,
             IMediator mediator,
             ClaimsPrincipal claimsPrincipal,
             CancellationToken ct)
@@ -147,8 +152,7 @@ namespace ManageUsers.Controllers
                    UserRoleId: request.UserRoleId,
                    Enabled: false,
                    CreatedAt: DateTime.UtcNow,
-                   BirthDate: request.BirthDate,
-                   Avatar: request.Avatar);
+                   BirthDate: request.BirthDate);
 
                 CreateUserResponse createUserResponse = await mediator.Send(command, ct);
                 if (!string.IsNullOrEmpty(createUserResponse.FailedResult))
@@ -571,7 +575,7 @@ namespace ManageUsers.Controllers
 
         private static async Task<Results<Ok<APIResponse<UpdateUserResponse>>, BadRequest<APIResponse<UpdateUserResponse>>>> UpdateUser(
             [FromRoute] string id,
-            [FromForm] UpdateUserRequest request,
+            [FromBody] UpdateUserRequest request,
             IMediator mediator,
             CancellationToken ct)
         {
@@ -594,8 +598,7 @@ namespace ManageUsers.Controllers
                     AreaId: request.AreaId,
                     ZoneId: request.RegionId,
                     RoleId: request.RoleId,
-                    BirthDate: request.BirthDate,
-                    Avatar: request.Avatar);
+                    BirthDate: request.BirthDate);
 
                 var result = await mediator.Send(command, ct);
 
@@ -669,6 +672,45 @@ namespace ManageUsers.Controllers
                     ?? claimsPrincipal.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
                 var result = await sender.Send(new GetUserProfileQuery(userId), ct);
+
+                if (!string.IsNullOrEmpty(result.FailedResult))
+                {
+                    response.ErrorMessage = [result.FailedResult];
+                    response.IsSuccess = false;
+                    response.StatusCode = HttpStatusCode.BadRequest;
+                    return TypedResults.BadRequest(response);
+                }
+
+                response.StatusCode = HttpStatusCode.OK;
+                response.Result.Data = result;
+                return TypedResults.Ok(response);
+            }
+            catch
+            {
+                throw;
+            }
+        }
+
+        private static async Task<Results<Ok<APIResponse<UpdateUserProfileResponse>>, BadRequest<APIResponse<UpdateUserProfileResponse>>>> UpdateProfile(
+            [FromForm] UpdateUserProfileRequest request,
+            ClaimsPrincipal claimsPrincipal,
+            IMediator mediator,
+            CancellationToken ct)
+        {
+            APIResponse<UpdateUserProfileResponse> response = new();
+
+            try
+            {
+                var userId = claimsPrincipal.FindFirst("nameid")?.Value
+                    ?? claimsPrincipal.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+                var command = new UpdateUserProfileCommand(
+                    UserId: userId,
+                    Email: request.Email,
+                    PhoneNumber: request.PhoneNumber,
+                    Avatar: request.Avatar);
+
+                var result = await mediator.Send(command, ct);
 
                 if (!string.IsNullOrEmpty(result.FailedResult))
                 {

@@ -91,14 +91,6 @@ namespace ManageUsers.Application.Handlers
                 return response;
             }
 
-            if (request.Avatar is not null)
-            {
-                if (!string.IsNullOrEmpty(user.AvatarUrl))
-                    await _fileService.DeleteFileAsync(user.AvatarUrl, ct);
-
-                user.AvatarUrl = await _fileService.UploadAvatarAsync(request.Avatar, ct);
-            }
-
             user.FirstName = request.FirstName;
             user.LastName = request.LastName;
             user.PhoneNumber = request.PhoneNumber;

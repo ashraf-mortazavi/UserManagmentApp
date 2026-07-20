@@ -12,16 +12,17 @@ namespace ManageUsers.Application.DTOs
     public class UserDto
     {
         public string Id { get; set; } = string.Empty;
+        public string? UserName { get; set; }
         public string? FirstName { get; set; }
         public string? LastName { get; set; }
-        public string? UserName { get; set; }
         public string? NationalCode { get; set; }
         public string? PhoneNumber { get; set; }
         public bool Enabled { get; set; }
         public AccessLevel AccessLevel { get; set; }
+        public string AccessLevelName { get; set; } = string.Empty;
         public int? AreaId { get; set; }
-        public int? ZoneId { get; set; }
         public string? AreaName { get; set; }
+        public int? ZoneId { get; set; }
         public string? ZoneName { get; set; }
         public string? BirthDateShamsi { get; set; }
         public string? AvatarUrl { get; set; }

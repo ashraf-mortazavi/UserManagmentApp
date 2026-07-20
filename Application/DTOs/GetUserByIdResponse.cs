@@ -15,9 +15,10 @@ namespace ManageUsers.Application.DTOs
         public string? PersonalCode { get; set; }
         public bool Enabled { get; set; }
         public AccessLevel AccessLevel { get; set; } = AccessLevel.Setad;
+        public string AccessLevelName { get; set; } = string.Empty;
         public int? AreaId { get; set; }
-        public int? ZoneId { get; set; }
         public string? AreaName { get; set; }
+        public int? ZoneId { get; set; }
         public string? ZoneName { get; set; }
         public DateTime? BirthDate { get; set; }
         public string? BirthDateShamsi { get; set; }

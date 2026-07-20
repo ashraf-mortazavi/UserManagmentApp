@@ -12,7 +12,7 @@ namespace ManageUsers.Application.Commands
         AccessLevel AccessLevel,
         int? AreaId, int? ZoneId,
         string CreatedById, string UserRoleId,
-        DateTime? BirthDate, IFormFile? Avatar
+        DateTime? BirthDate
         ) :  IRequest<CreateUserResponse>
     {};
 }

@@ -35,9 +35,6 @@ namespace ManageUsers.Application.DTOs
         public string UserRoleId { get; set; }
         [Description("تاریخ تولد")]
         public DateTime? BirthDate { get; set; }
-        [Description("عکس پروفایل")]
-        public IFormFile? Avatar { get; set; }
-
     }
 
     public sealed class CreateUserResponse : BaseResponse

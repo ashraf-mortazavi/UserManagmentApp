@@ -20,7 +20,6 @@ namespace ManageUsers.Application.Commands
         int? AreaId,
         int? ZoneId,
         string RoleId,
-        DateTime? BirthDate,
-        IFormFile? Avatar
+        DateTime? BirthDate
     ) : IRequest<UpdateUserResponse>;
 }
