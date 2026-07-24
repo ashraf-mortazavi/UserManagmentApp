@@ -24,6 +24,8 @@ public sealed class User : IdentityUser<int>
     public DateTime? PasswordExpiresAt { get; set; }
     public DateTime? BirthDate { get; set; }
 
+    public string? SetadName { get; set; }
+
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime? UpdatedAt { get; set; }
 

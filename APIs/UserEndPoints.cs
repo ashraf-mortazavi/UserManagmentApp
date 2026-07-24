@@ -146,6 +146,7 @@ namespace ManageUsers.Controllers
                    AccessLevel: request.AccessLevel,
                    AreaId: request.AreaId,
                    ZoneId: request.ZoneId,
+                   SetadName: request.SetadName,
                    UserName: request.UserName,
                    Password: request.Password,
                    CreatedById: userId,
@@ -596,7 +597,8 @@ namespace ManageUsers.Controllers
                     IsApprovedByAdmin: request.IsApprovedByAdmin,
                     AccessLevel: request.AccessLevel,
                     AreaId: request.AreaId,
-                    ZoneId: request.RegionId,
+                    ZoneId: request.ZoneId,
+                    SetadName: request.SetadName,
                     RoleId: request.RoleId,
                     BirthDate: request.BirthDate);
 
@@ -706,7 +708,7 @@ namespace ManageUsers.Controllers
 
                 var command = new UpdateUserProfileCommand(
                     UserId: userId,
-                    Email: request.Email,
+                    BirthDate: request.BirthDate,
                     PhoneNumber: request.PhoneNumber,
                     Avatar: request.Avatar);
 

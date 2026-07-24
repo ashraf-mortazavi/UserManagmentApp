@@ -17,16 +17,14 @@ namespace ManageUsers.Application.Handlers
         private readonly IOrganizationService _organizationService;
         private readonly IAreaService _areaService;
         private readonly IZoneService _zoneService;
-        private readonly IFileService _fileService;
 
-        public CreateUserCommandHandler(IRoleService roleService, IUserService userService, IOrganizationService organizationService, IAreaService areaService, IZoneService regionService, IFileService fileService)
+        public CreateUserCommandHandler(IRoleService roleService, IUserService userService, IOrganizationService organizationService, IAreaService areaService, IZoneService zoneService)
         {
             _roleService = roleService;
             _userService = userService;
             _organizationService = organizationService;
             _areaService = areaService;
-            _zoneService = regionService;
-            _fileService = fileService;
+            _zoneService = zoneService;
         }
 
         public async Task<CreateUserResponse> Handle(CreateUserCommand request, CancellationToken ct)
@@ -39,7 +37,7 @@ namespace ManageUsers.Application.Handlers
                 userResponse.FailedResult = "نقش مورد نظر یافت نشد!";
                 return userResponse;
             }
-            var existingUser = await _userService.GetUserByNationalCodeAsync(request.NationalCode, ct);
+            User? existingUser = await _userService.GetUserByNationalCodeAsync(request.NationalCode, ct);
 
             if (existingUser != null)
             {
@@ -103,6 +101,7 @@ namespace ManageUsers.Application.Handlers
             newUser.CreatedAt = DateTime.UtcNow;
             newUser.UserName = request.UserName;
             newUser.BirthDate = request.BirthDate;
+            newUser.SetadName = request.SetadName;
 
             var result = await _userService.AssignUserRoleAsync(user: newUser, request.Password, role.Name!, cancellationToken: ct);
             if (!result.Succeeded)

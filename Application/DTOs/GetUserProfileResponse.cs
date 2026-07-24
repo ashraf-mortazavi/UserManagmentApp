@@ -10,6 +10,4 @@ public class GetUserProfileResponse : BaseResponse
     public string? Email { get; set; }
     public string? AvatarUrl { get; set; }
     public string? RoleName { get; set; }
-    public AccessLevel AccessLevel { get; set; }
-
 }

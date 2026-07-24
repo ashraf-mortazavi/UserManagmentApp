@@ -1,3 +1,4 @@
+
 using FluentValidation;
 using ManageUsers.Application.Common.Utilities;
 using ManageUsers.Application.CustomValidators;
@@ -66,14 +67,21 @@ namespace ManageUsers.Application.RequestValidators
 
             RuleFor(x => x.AreaId)
                 .NotNull()
-                .When(x => x.AccessLevel == AccessLevel.Area || x.AccessLevel == AccessLevel.Zone)
+                .When(x => x.AccessLevel == AccessLevel.Area)
                 .WithMessage(nameof(CreateUserRequest.AreaId).GetNullOrEmptyErrorMessage(typeof(CreateUserRequest)))
                 .NotEmpty()
-                .When(x => x.AccessLevel == AccessLevel.Area || x.AccessLevel == AccessLevel.Zone)
+                .When(x => x.AccessLevel == AccessLevel.Area)
                 .WithMessage(nameof(CreateUserRequest.AreaId).GetNullOrEmptyErrorMessage(typeof(CreateUserRequest)))
                 .GreaterThan(0)
-                .When(x => x.AccessLevel == AccessLevel.Area || x.AccessLevel == AccessLevel.Zone)
-                .WithMessage(nameof(CreateUserRequest.AreaId).GetGreaterThanErrorMessage(typeof(CreateUserRequest), 0));
+                .When(x => x.AccessLevel == AccessLevel.Area)
+                .WithMessage(nameof(CreateUserRequest.AreaId).GetGreaterThanErrorMessage(typeof(CreateUserRequest), 0))
+                .Null()
+                .When(x => x.AccessLevel == AccessLevel.Zone)
+                .WithMessage(nameof(CreateUserRequest.AreaId).GetNullOrEmptyErrorMessage(typeof(CreateUserRequest)))
+                .Empty()
+                .When(x => x.AccessLevel == AccessLevel.Zone)
+                .WithMessage(nameof(CreateUserRequest.AreaId).GetNullOrEmptyErrorMessage(typeof(CreateUserRequest)));
+
 
             RuleFor(x => x.ZoneId)
                 .NotNull()
@@ -93,8 +101,17 @@ namespace ManageUsers.Application.RequestValidators
 
             RuleFor(x => x.ZoneId)
                 .Null()
-                .When(x => x.AccessLevel != AccessLevel.Zone)
-                .WithMessage("ناحیه فقط برای سطح دسترسی ناحیه قابل انتخاب است.");
+                .When(x => x.AccessLevel == AccessLevel.Setad)
+                .WithMessage("برای سطح دسترسی ستاد نباید ناحیه انتخاب شود.");
+
+            RuleFor(x => x.SetadName)
+                .NotNull()
+                .When(x => x.AccessLevel == AccessLevel.Setad)
+                .WithMessage("نام ستاد نمی تواند خالی باشد وقتی سطح دسترسی ستاد است.!")
+                .NotEmpty()
+                .When(x => x.AccessLevel == AccessLevel.Setad)
+                .WithMessage("نام ستاد نمی تواند خالی باشد وقتی سطح دسترسی ستاد است.!");
+
 
             RuleFor(x => x.BirthDate)
                 .LessThanOrEqualTo(DateTime.UtcNow)

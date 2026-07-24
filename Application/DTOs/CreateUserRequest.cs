@@ -31,6 +31,10 @@ namespace ManageUsers.Application.DTOs
         public int? ZoneId {get; set; }
         [Description("ناحیه")]
         public int? AreaId { get; set; }
+
+        [Description("ستاد")]
+        public string? SetadName { get; set; }
+
         [Description("شناسه نقش کاربر")]
         public string UserRoleId { get; set; }
         [Description("تاریخ تولد")]

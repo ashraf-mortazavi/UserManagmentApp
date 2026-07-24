@@ -20,6 +20,7 @@ namespace ManageUsers.Application.DTOs
         public string? Token { get; set; }
         public string? RefreshToken { get; set; }
         public string? UserId { get; set; }
+        public string? RoleId { get; set; }
         public string? PhoneNumber { get; set; }
         public bool RequiresOtp { get; set; }
         public  bool IsFirstLogin { get; set; }

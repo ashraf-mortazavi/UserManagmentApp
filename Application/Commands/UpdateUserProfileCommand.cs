@@ -6,7 +6,7 @@ namespace ManageUsers.Application.Commands
 {
     public sealed record UpdateUserProfileCommand(
         string UserId,
-        string? Email,
+        DateTime? BirthDate,
         string? PhoneNumber,
         IFormFile? Avatar
     ) : IRequest<UpdateUserProfileResponse>;

@@ -42,7 +42,6 @@ public sealed class GetUserProfileQueryHandler : IRequestHandler<GetUserProfileQ
         response.Email = user.Email;
         response.AvatarUrl = user.AvatarUrl;
         response.RoleName = roleName;
-        response.AccessLevel = user.AccessLevel;
 
         return response;
     }

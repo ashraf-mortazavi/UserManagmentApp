@@ -19,6 +19,7 @@ namespace ManageUsers.Application.Commands
         AccessLevel AccessLevel,
         int? AreaId,
         int? ZoneId,
+        string? SetadName,
         string RoleId,
         DateTime? BirthDate
     ) : IRequest<UpdateUserResponse>;

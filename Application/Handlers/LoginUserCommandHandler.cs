@@ -118,6 +118,7 @@ namespace ManageUsers.Application.Handlers
             response.IsFirstLogin = user.IsFirstLogin ? true : false;
             response.PhoneNumber = user.PhoneNumber;
             user.IsFirstLogin = false;
+            response.RoleId = roleIds.FirstOrDefault();
             _userService.UpdateUser(user, cancellationToken);
 
             return response;

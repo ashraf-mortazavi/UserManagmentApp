@@ -35,19 +35,17 @@ namespace ManageUsers.Application.Handlers
                 user.AvatarUrl = await _fileService.UploadAvatarAsync(request.Avatar, ct);
             }
 
-            if (!string.IsNullOrEmpty(request.Email))
-                user.Email = request.Email;
-
             if (!string.IsNullOrEmpty(request.PhoneNumber))
                 user.PhoneNumber = request.PhoneNumber;
+
+            if (request.BirthDate.HasValue && request.BirthDate.Value != null)
+                user.BirthDate = request.BirthDate;
 
             user.UpdatedAt = DateTime.UtcNow;
 
             _userService.UpdateUser(user, ct);
 
-            response.AvatarUrl = user.AvatarUrl;
-            response.Email = user.Email;
-            response.PhoneNumber = user.PhoneNumber;
+            response.Id = user.Id.ToString();
             return response;
         }
     }
